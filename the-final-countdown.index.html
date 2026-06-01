@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Final Countdown</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f4;
+    --text: #1a1a18;
+    --text2: #6b6b67;
+    --border: #e2e2df;
+    --border2: #c8c8c4;
+    --green: #1D9E75;
+    --green-bg: #E1F5EE;
+    --green-border: #5DCAA5;
+    --green-dark: #085041;
+    --orange: #EF9F27;
+    --red-text: #A32D2D;
+    --red-border: #F09595;
+    --red-bg: #FCEBEB;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: "SF Mono", "Fira Code", "Consolas", monospace;
+    --serif: Georgia, "Times New Roman", serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --bg2: #242422;
+      --text: #f0f0ee;
+      --text2: #8a8a86;
+      --border: #333331;
+      --border2: #4a4a47;
+      --green-bg: #085041;
+      --green-border: #1D9E75;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+  .container { max-width: 560px; margin: 0 auto; padding: 0 20px 80px; }
+
+  /* screens */
+  .screen { display: none; padding: 2rem 0; animation: fadeIn 0.25s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* typography */
+  .eyebrow { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text2); margin-bottom: 0.6rem; }
+  .screen-title { font-size: 26px; font-weight: 500; color: var(--text); line-height: 1.2; margin-bottom: 0.5rem; }
+  .serif-sub { font-size: 15px; color: var(--text2); line-height: 1.65; margin-bottom: 1.75rem; font-family: var(--serif); }
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 1.75rem 0; }
+
+  /* dots */
+  .dots { display: flex; gap: 5px; margin-bottom: 2rem; align-items: center; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2); transition: all .2s; }
+  .dot.on { width: 20px; border-radius: 3px; background: var(--text); }
+  .dot.done { background: var(--text2); }
+
+  /* inputs */
+  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 1rem; }
+  .field label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text2); }
+  input[type="number"], input[type="text"], select {
+    background: var(--bg2); border: 0.5px solid var(--border); border-radius: 6px;
+    padding: 8px 10px; font-size: 15px; color: var(--text); font-family: var(--font);
+    width: 100%; outline: none;
+  }
+  input:focus, select:focus { border-color: var(--border2); }
+  input[type="range"] { accent-color: var(--text); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* buttons */
+  .btn {
+    background: var(--text); color: var(--bg); border: none; border-radius: 8px;
+    padding: 12px 24px; font-size: 14px; font-weight: 500; cursor: pointer;
+    font-family: var(--font); margin-top: 0.75rem; display: inline-block;
+  }
+  .btn:hover { opacity: 0.82; }
+  .btn-ghost {
+    background: transparent; color: var(--text2); border: none; padding: 8px 0;
+    font-size: 13px; cursor: pointer; font-family: var(--font); display: block; margin-top: 6px;
+  }
+  .btn-ghost:hover { color: var(--text); }
+  .btn-danger {
+    background: transparent; color: var(--red-text); border: 0.5px solid var(--red-border);
+    border-radius: 8px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-family: var(--font);
+  }
+  .btn-danger:hover { background: var(--red-bg); }
+  .add-type-btns { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .add-type-btn {
+    flex: 1; min-width: 80px; border: 0.5px dashed var(--border2); border-radius: 8px;
+    padding: 9px 8px; background: transparent; font-size: 13px; color: var(--text2);
+    cursor: pointer; font-family: var(--font); display: flex; align-items: center;
+    justify-content: center; gap: 6px;
+  }
+  .add-type-btn:hover { background: var(--bg2); }
+
+  /* prev box */
+  .prev-box {
+    background: var(--bg2); border-radius: 10px; padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem; display: flex; align-items: baseline; gap: 12px;
+  }
+  .prev-big { font-size: 40px; font-weight: 500; font-family: var(--mono); color: var(--text); line-height: 1; }
+  .prev-unit { font-size: 13px; color: var(--text2); }
+
+  /* grid */
+  .grid-wrap { line-height: 1; margin-bottom: 1.25rem; }
+  .cell {
+    display: inline-block; border-radius: 1px; margin: 1.5px; width: 8px; height: 8px;
+  }
+  .cell.past { background: #444441; }
+  .cell.future { background: var(--green-bg); border: 0.5px solid var(--green-border); }
+  .cell.shared { background: var(--green); }
+  .cell.alone { background: var(--green-bg); border: 0.5px solid var(--green-border); opacity: 0.35; }
+
+  /* stats */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 1.5rem; }
+  .stat { background: var(--bg2); border-radius: 8px; padding: 0.7rem 0.9rem; }
+  .stat-val { font-size: 19px; font-weight: 500; font-family: var(--mono); color: var(--text); }
+  .stat-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--text2); margin-top: 2px; }
+
+  /* tabs */
+  .tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .tab {
+    padding: 4px 11px; font-size: 11px; border: 0.5px solid var(--border); border-radius: 100px;
+    cursor: pointer; background: transparent; color: var(--text2); letter-spacing: .04em; font-family: var(--font);
+  }
+  .tab.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  /* person cards */
+  .person-card {
+    background: var(--bg); border: 0.5px solid var(--border); border-radius: 10px;
+    padding: 0.875rem 1rem; margin-bottom: 8px;
+  }
+  .pc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .avatar {
+    width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0;
+  }
+  .pc-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .pc-inputs { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 8px; align-items: end; }
+  .pc-inputs .field { margin-bottom: 0; }
+  .pc-inputs .field label { font-size: 10px; }
+  .pc-inputs input, .pc-inputs select { font-size: 13px; }
+  .rm {
+    width: 26px; height: 26px; border: 0.5px solid var(--border); border-radius: 6px;
+    background: transparent; cursor: pointer; color: var(--text2); font-size: 15px;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 1px; padding: 0;
+  }
+  .rm:hover { background: var(--bg2); }
+
+  /* pnav */
+  .pnav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .pnav-btn {
+    display: flex; align-items: center; gap: 7px; padding: 6px 12px;
+    border: 0.5px solid var(--border); border-radius: 100px; cursor: pointer;
+    background: transparent; font-family: var(--font); font-size: 12px; color: var(--text2);
+  }
+  .pnav-btn.on { border-color: var(--text); color: var(--text); background: var(--bg2); }
+  .pnav-add { border-style: dashed; font-size: 11px; }
+  .pnav-av { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+
+  /* audit */
+  .audit-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid var(--border); }
+  .audit-row:last-child { border-bottom: none; }
+  .audit-lbl { font-size: 13px; color: var(--text); width: 108px; flex-shrink: 0; }
+  .audit-lbl span { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); margin-top: 1px; }
+  .audit-val { font-size: 13px; font-weight: 500; font-family: var(--mono); min-width: 26px; text-align: right; color: var(--text); }
+
+  /* burndown */
+  .bd-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .bd-lbl { font-size: 12px; color: var(--text2); width: 96px; flex-shrink: 0; }
+  .bd-bar-outer { flex: 1; height: 10px; background: var(--bg2); border-radius: 2px; overflow: hidden; }
+  .bd-bar-inner { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+  .bd-pct { font-size: 11px; font-family: var(--mono); color: var(--text2); min-width: 32px; text-align: right; }
+
+  /* verdict */
+  .verdict-line {
+    font-size: 16px; color: var(--text2); line-height: 1.7; font-family: var(--serif);
+    padding: 0.75rem 0; border-bottom: 0.5px solid var(--border);
+  }
+  .verdict-line:last-child { border-bottom: none; }
+  .verdict-line strong { color: var(--text); font-weight: 500; font-size: 17px; }
+  .verdict-line.punch { font-size: 18px; color: var(--text); font-weight: 500; padding-top: 1rem; }
+  .verdict-line.punch strong { font-size: 20px; }
+
+  /* what-if */
+  .whatif { background: var(--bg2); border-radius: 12px; padding: 1.25rem 1.5rem; }
+  .whatif-title { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--text2); margin-bottom: 1rem; }
+  .whatif-slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .whatif-slider-row label { font-size: 13px; color: var(--text); white-space: nowrap; }
+  .whatif-val { font-size: 13px; font-weight: 500; font-family: var(--mono); color: var(--text); min-width: 26px; text-align: right; }
+  .wi-cards { display: flex; gap: 10px; flex-wrap: wrap; }
+  .wi-card { flex: 1; min-width: 100px; background: var(--bg); border-radius: 8px; padding: 0.75rem 1rem; border: 0.5px solid var(--border); }
+  .wi-val { font-size: 20px; font-weight: 500; font-family: var(--mono); line-height: 1; }
+  .wi-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--text2); margin-top: 4px; }
+  .wi-delta { font-size: 12px; margin-top: 6px; font-family: var(--mono); }
+
+  /* person detail */
+  .enc-block { border: 0.5px solid var(--border); border-radius: 10px; padding: 1.1rem; margin-bottom: 1rem; }
+  .enc-bar-wrap { height: 5px; background: var(--bg2); border-radius: 3px; overflow: hidden; margin: 10px 0 6px; }
+  .enc-bar { height: 100%; border-radius: 3px; }
+  .verdict-block { padding: 1.1rem; border-left: 3px solid #888780; border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; }
+  .verdict-block p { font-size: 14px; color: var(--text2); line-height: 1.8; font-family: var(--serif); }
+  .verdict-block strong { color: var(--text); font-weight: 500; }
+  .tl-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .tl-lbl { font-size: 11px; color: var(--text2); width: 48px; text-align: right; flex-shrink: 0; }
+  .tl-outer { flex: 1; height: 14px; background: var(--bg2); border-radius: 2px; overflow: hidden; position: relative; }
+  .tl-seg { height: 100%; position: absolute; top: 0; border-radius: 2px; }
+  .tl-age { font-size: 10px; font-family: var(--mono); color: var(--text2); min-width: 24px; }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+  .leg-dot { width: 8px; height: 8px; border-radius: 1px; display: inline-block; flex-shrink: 0; }
+
+  /* topbar */
+  .dash-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; }
+  .back-link { font-size: 12px; color: var(--text2); background: transparent; border: none; cursor: pointer; font-family: var(--font); padding: 0; }
+  .back-link:hover { color: var(--text); }
+  .saved-badge { font-size: 11px; color: var(--text2); opacity: 0; transition: opacity .4s; margin-left: 8px; }
+  .saved-badge.show { opacity: 1; }
+
+  /* splash */
+  .returning-banner {
+    background: var(--bg2); border-radius: 10px; padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem; display: flex; justify-content: space-between;
+    align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .rb-btn {
+    background: var(--text); color: var(--bg); border: none; border-radius: 6px;
+    padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font);
+  }
+  .rb-btn:hover { opacity: .82; }
+
+  /* colors */
+  .green { color: #0F6E56; }
+  .orange { color: #EF9F27; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- SPLASH -->
+<div class="screen active" id="s-splash">
+  <div style="min-height:90vh;display:flex;flex-direction:column;justify-content:center">
+    <div class="eyebrow" style="margin-bottom:1.5rem">The Final Countdown</div>
+    <h1 style="font-size:38px;font-weight:500;color:var(--text);line-height:1.15;margin-bottom:1rem;max-width:380px">Your life,<br>in squares.</h1>
+    <p style="font-size:16px;color:var(--text2);line-height:1.7;max-width:400px;font-family:var(--serif);margin-bottom:2.5rem">Each square is one week. The gray ones are already gone.<br>This takes two minutes. It will bother you — usefully.</p>
+    <div id="splash-actions"></div>
+  </div>
+</div>
+
+<!-- STEP 1: YOU -->
+<div class="screen" id="s-you">
+  <div class="dots" id="dots-you"></div>
+  <div class="screen-title">First, some numbers.</div>
+  <p class="serif-sub">Your age and a life expectancy model. Everything else is derived from these two.</p>
+  <div class="two">
+    <div class="field"><label>Your age</label><input type="number" id="my-age" min="1" max="99" value="35"></div>
+    <div class="field"><label>Model</label>
+      <select id="my-exp">
+        <option value="83">Global avg (83)</option>
+        <option value="80">Male western (80)</option>
+        <option value="85">Female western (85)</option>
+        <option value="90">Optimistic (90)</option>
+      </select>
+    </div>
+  </div>
+  <div class="prev-box"><div class="prev-big" id="prev-wks">--</div><div class="prev-unit">weeks remaining</div></div>
+  <div class="grid-wrap" id="prev-grid"></div>
+  <button class="btn" id="btn-you-next">Continue</button>
+</div>
+
+<!-- STEP 2: PEOPLE -->
+<div class="screen" id="s-people">
+  <div class="dots" id="dots-people"></div>
+  <div class="screen-title">Who matters most?</div>
+  <p class="serif-sub">Add the people and animals whose time overlaps with yours.</p>
+  <div id="ob-people-list"></div>
+  <div class="add-type-btns">
+    <button class="add-type-btn" data-add="person">👤 Person</button>
+    <button class="add-type-btn" data-add="dog">🐕 Dog</button>
+    <button class="add-type-btn" data-add="cat">🐈 Cat</button>
+  </div>
+  <button class="btn" id="btn-people-next">Continue</button>
+  <button class="btn-ghost" id="btn-people-skip">Skip for now</button>
+</div>
+
+<!-- STEP 3: AUDIT -->
+<div class="screen" id="s-audit">
+  <div class="dots" id="dots-audit"></div>
+  <div class="screen-title">Where does the time go?</div>
+  <p class="serif-sub">Hours per day. This is the part that stings.</p>
+  <div id="ob-audit-rows"></div>
+  <button class="btn" id="btn-audit-next">Show me</button>
+</div>
+
+<!-- DASHBOARD -->
+<div class="screen" id="s-dashboard">
+  <div class="dash-topbar">
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="back-link" id="btn-settings">settings</button>
+      <span class="saved-badge" id="saved-badge">· saved</span>
+    </div>
+    <button class="btn-danger" id="btn-reset">reset</button>
+  </div>
+
+  <!-- Life grid -->
+  <div class="eyebrow">Your life</div>
+  <div class="prev-box" style="margin-bottom:1rem">
+    <div class="prev-big" id="dash-wks">--</div>
+    <div class="prev-unit" id="dash-unit">weeks remaining</div>
+  </div>
+  <div class="tabs" id="dash-tabs">
+    <button class="tab on" data-u="weeks">Weeks</button>
+    <button class="tab" data-u="months">Months</button>
+    <button class="tab" data-u="years">Years</button>
+  </div>
+  <div class="grid-wrap" id="dash-grid"></div>
+  <div class="stats-grid" id="dash-stats"></div>
+
+  <hr class="divider">
+
+  <!-- People -->
+  <div class="eyebrow">Your people</div>
+  <div class="pnav" id="dash-pnav"></div>
+  <div id="dash-person-detail"></div>
+
+  <hr class="divider">
+
+  <!-- Audit -->
+  <div class="eyebrow">Time audit — hours per day</div>
+  <div id="dash-audit-sliders" style="margin-bottom:1.75rem"></div>
+
+  <div class="eyebrow" style="margin-bottom:1rem">Where your remaining life goes</div>
+  <div id="dash-burndown" style="margin-bottom:1.5rem"></div>
+
+  <div id="dash-verdict" style="margin-bottom:2rem"></div>
+
+  <div class="whatif">
+    <div class="whatif-title">What if you reclaimed some of it?</div>
+    <div class="whatif-slider-row">
+      <label>Screen time</label>
+      <input type="range" id="wi-slider" min="0" max="8" step="0.5" value="4" style="flex:1;min-width:80px">
+      <span class="whatif-val" id="wi-hpd">4h</span>
+      <span style="font-size:11px;color:var(--text2)">/day</span>
+    </div>
+    <div class="wi-cards" id="wi-result"></div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+const STORE_KEY = "tfc_v3";
+const PALETTE = ["#1D9E75","#BA7517","#D4537E","#378ADD","#639922","#D85A30"];
+const PTXT_D  = ["#085041","#633806","#72243E","#0C447C","#27500A","#993C1D"];
+const PTXT_L  = ["#E1F5EE","#FAEEDA","#FBEAF0","#E6F1FB","#EAF3DE","#FAECE7"];
+const TYPE_EXP   = {person:83, dog:13, cat:16};
+const TYPE_EMOJI = {person:"👤", dog:"🐕", cat:"🐈"};
+const TYPE_LABEL = {person:"person", dog:"dog", cat:"cat"};
+
+const DEFAULT_STATE = {
+  age: 35, exp: 83,
+  people: [
+    {name:"Mom",  age:65, exp:85, contact:"weekly", type:"person"},
+    {name:"Dad",  age:68, exp:80, contact:"weekly", type:"person"},
+    {name:"Micio",age:4,  exp:16, contact:"daily",  type:"cat"},
+  ],
+  audit: [
+    {label:"Sleep",       sub:"recovery",     hpd:7},
+    {label:"Screen time", sub:"phone/social", hpd:4},
+    {label:"Work",        sub:"paid hours",   hpd:8},
+    {label:"Commute",     sub:"transit/drive",hpd:1},
+  ]
+};
+
+let state = loadState();
+let dashUnit = "weeks";
+let personUnit = "weeks";
+let activeP = 0;
+let saveTimer = null;
+
+/* ---- storage ---- */
+function loadState() {
+  try { const r = localStorage.getItem(STORE_KEY); if (r) return JSON.parse(r); } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+function saveState() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); showSaved(); } catch(e) {}
+}
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 600);
+}
+function showSaved() {
+  const b = document.getElementById("saved-badge");
+  if (!b) return;
+  b.classList.add("show");
+  setTimeout(() => b.classList.remove("show"), 2000);
+}
+
+/* ---- helpers ---- */
+function isDark() { return window.matchMedia && window.matchMedia("(prefers-color-scheme:dark)").matches; }
+function initials(n, type) {
+  if (type !== "person") return TYPE_EMOJI[type] || "?";
+  return (n||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase() || "?";
+}
+function yrs(h) { return (h / 8760).toFixed(1); }
+function hoursLeft() { return (state.exp - state.age) * 365 * 24; }
+
+/* ---- dots ---- */
+function setDots(step) {
+  ["you","people","audit","dashboard"].forEach((id, idx) => {
+    const el = document.getElementById("dots-" + id);
+    if (!el) return;
+    const s = idx + 1;
+    let h = "";
+    for (let j = 1; j <= 4; j++) {
+      if (j < step) h += `<div class="dot done"></div>`;
+      else if (j === step) h += `<div class="dot on"></div>`;
+      else h += `<div class="dot"></div>`;
+    }
+    el.innerHTML = h;
+  });
+}
+
+/* ---- navigation ---- */
+function go(sid) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(sid).classList.add("active");
+  const sm = {"s-you":1,"s-people":2,"s-audit":3,"s-dashboard":4};
+  if (sm[sid]) setDots(sm[sid]);
+  if (sid === "s-you")       { syncInputs(); updateYouPreview(); }
+  if (sid === "s-people")    renderObPeople();
+  if (sid === "s-audit")     renderObAudit();
+  if (sid === "s-dashboard") { renderDashGrid(); renderDashPnav(); renderPersonDetail(); renderDashAudit(); renderBurndown(); renderWhatIf(); }
+  window.scrollTo(0,0);
+}
+
+/* ---- splash ---- */
+function renderSplash() {
+  const el = document.getElementById("splash-actions");
+  if (!el) return;
+  const hasData = !!localStorage.getItem(STORE_KEY);
+  if (hasData) {
+    const s = loadState();
+    const wl = Math.max(0, (s.exp - s.age) * 52);
+    el.innerHTML = `
+      <div class="returning-banner">
+        <div>
+          <div style="font-size:14px;color:var(--text)">Welcome back. <strong>${wl.toLocaleString()} weeks</strong> remaining.</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Your data is saved on this device.</div>
+        </div>
+        <button class="rb-btn" id="btn-resume">Continue ↗</button>
+      </div>
+      <button class="btn-ghost" id="btn-fresh">Start over</button>`;
+    document.getElementById("btn-resume").onclick = () => { state = loadState(); syncInputs(); go("s-dashboard"); };
+    document.getElementById("btn-fresh").onclick  = () => { localStorage.removeItem(STORE_KEY); state = JSON.parse(JSON.stringify(DEFAULT_STATE)); go("s-you"); };
+  } else {
+    el.innerHTML = `<button class="btn" id="btn-start">Let's start</button>`;
+    document.getElementById("btn-start").onclick = () => go("s-you");
+  }
+}
+
+/* ---- step 1 ---- */
+function syncInputs() {
+  const a = document.getElementById("my-age"), e = document.getElementById("my-exp");
+  if (a) a.value = state.age;
+  if (e) e.value = state.exp;
+}
+function updateYouPreview() {
+  const age = state.age, exp = state.exp;
+  const wl = Math.max(0, (exp - age) * 52);
+  const el = document.getElementById("prev-wks");
+  if (el) el.textContent = wl.toLocaleString();
+  const g = document.getElementById("prev-grid");
+  if (!g) return;
+  let h = "";
+  for (let i = 0; i < exp * 52; i++)
+    h += `<span class="cell ${i < age*52 ? "past" : "future"}"></span>`;
+  g.innerHTML = h;
+}
+document.getElementById("my-age").addEventListener("input", e => { state.age = parseInt(e.target.value)||35; updateYouPreview(); scheduleSave(); });
+document.getElementById("my-exp").addEventListener("change", e => { state.exp = parseInt(e.target.value)||83; updateYouPreview(); scheduleSave(); });
+document.getElementById("btn-you-next").onclick = () => go("s-people");
+
+/* ---- step 2 ---- */
+function renderObPeople() {
+  const c = document.getElementById("ob-people-list"); c.innerHTML = "";
+  state.people.forEach((p, i) => {
+    const bg = PALETTE[i % PALETTE.length];
+    const tc = isDark() ? PTXT_L[i%PTXT_L.length] : PTXT_D[i%PTXT_D.length];
+    const isPet = p.type !== "person";
+    const av = initials(p.name, p.type);
+    const d = document.createElement("div"); d.className = "person-card";
+    d.innerHTML = `
+      <div class="pc-head">
+        <div class="avatar" style="background:${isPet?"transparent":bg};color:${tc};font-size:${isPet?"18px":"11px"}">${av}</div>
+        <div class="pc-name">${p.name || TYPE_LABEL[p.type]} <span style="font-size:11px;color:var(--text2);font-weight:400">${TYPE_LABEL[p.type]}</span></div>
+      </div>
+      <div class="pc-inputs">
+        <div class="field"><label>Name</label><input type="text" value="${p.name}" data-i="${i}" data-f="name"></div>
+        <div class="field"><label>Age</label><input type="number" min="0" max="120" value="${p.age}" data-i="${i}" data-f="age" style="width:100%"></div>
+        <div class="field"><label>Exp.</label><input type="number" min="1" max="120" value="${p.exp}" data-i="${i}" data-f="exp" style="width:100%"></div>
+        <div class="field"><label>Contact</label>
+          <select data-i="${i}" data-f="contact">
+            <option value="daily"${p.contact==="daily"?" selected":""}>Daily</option>
+            <option value="weekly"${p.contact==="weekly"?" selected":""}>Weekly</option>
+            <option value="monthly"${p.contact==="monthly"?" selected":""}>Monthly</option>
+            <option value="yearly"${p.contact==="yearly"?" selected":""}>Yearly</option>
+          </select></div>
+        <button class="rm" data-rm="${i}">×</button>
+      </div>`;
+    c.appendChild(d);
+  });
+  c.querySelectorAll("[data-i]").forEach(el => {
+    el.addEventListener("change", e => {
+      const i = parseInt(e.target.dataset.i), f = e.target.dataset.f;
+      if (f==="age") state.people[i].age = parseInt(e.target.value)||0;
+      else if (f==="exp") state.people[i].exp = parseInt(e.target.value)||1;
+      else if (f==="name") { state.people[i].name = e.target.value; renderObPeople(); }
+      else if (f==="contact") state.people[i].contact = e.target.value;
+      scheduleSave();
+    });
+  });
+  c.querySelectorAll("[data-rm]").forEach(b => {
+    b.addEventListener("click", e => {
+      state.people.splice(parseInt(e.target.dataset.rm), 1);
+      scheduleSave(); renderObPeople();
+    });
+  });
+}
+function addPerson(type, fromDash) {
+  state.people.push({name:"", age:2, exp:TYPE_EXP[type]||83, contact:type==="person"?"weekly":"daily", type});
+  scheduleSave();
+  if (fromDash) { activeP = state.people.length-1; renderDashPnav(); renderPersonDetail(); }
+  else { renderObPeople(); setTimeout(() => { const ins = document.querySelectorAll("#ob-people-list input[data-f='name']"); if (ins.length) ins[ins.length-1].focus(); }, 50); }
+}
+document.querySelectorAll("[data-add]").forEach(btn => btn.onclick = () => addPerson(btn.dataset.add));
+document.getElementById("btn-people-next").onclick = () => go("s-audit");
+document.getElementById("btn-people-skip").onclick = () => go("s-audit");
+
+/* ---- step 3 ---- */
+function renderObAudit() {
+  const c = document.getElementById("ob-audit-rows"); c.innerHTML = "";
+  state.audit.forEach((a, i) => {
+    const r = document.createElement("div"); r.className = "audit-row";
+    r.innerHTML = `
+      <div class="audit-lbl">${a.label}<span>${a.sub}</span></div>
+      <input type="range" style="flex:1" min="0" max="16" step="1" value="${a.hpd}" data-ai="${i}">
+      <span class="audit-val" id="oar-${i}">${a.hpd}h</span>`;
+    c.appendChild(r);
+  });
+  c.querySelectorAll("[data-ai]").forEach(sl => {
+    sl.addEventListener("input", e => {
+      const i = parseInt(e.target.dataset.ai);
+      state.audit[i].hpd = parseInt(e.target.value);
+      document.getElementById("oar-"+i).textContent = state.audit[i].hpd + "h";
+      scheduleSave();
+    });
+  });
+}
+document.getElementById("btn-audit-next").onclick = () => go("s-dashboard");
+
+/* ---- dashboard: life grid ---- */
+function renderDashGrid() {
+  const age = state.age, exp = state.exp;
+  let total, lived;
+  if (dashUnit==="weeks")  { total=exp*52;  lived=age*52;  }
+  else if (dashUnit==="months") { total=exp*12;  lived=age*12;  }
+  else                     { total=exp;     lived=age;     }
+  const sz = dashUnit==="years"?16:dashUnit==="months"?10:8;
+  let h = "";
+  for (let i = 0; i < total; i++)
+    h += `<span class="cell ${i<lived?"past":"future"}" style="width:${sz}px;height:${sz}px;"></span>`;
+  document.getElementById("dash-grid").innerHTML = h;
+  const left = Math.round(total-lived), pct = Math.round((lived/total)*100);
+  document.getElementById("dash-wks").textContent = left.toLocaleString();
+  document.getElementById("dash-unit").textContent = dashUnit + " remaining";
+  document.getElementById("dash-stats").innerHTML = `
+    <div class="stat"><div class="stat-val">${Math.round(lived).toLocaleString()}</div><div class="stat-lbl">${dashUnit} lived</div></div>
+    <div class="stat"><div class="stat-val">${left.toLocaleString()}</div><div class="stat-lbl">${dashUnit} left</div></div>
+    <div class="stat"><div class="stat-val">${pct}%</div><div class="stat-lbl">elapsed</div></div>
+    <div class="stat"><div class="stat-val">${Math.round((exp-age)*365*24).toLocaleString()}</div><div class="stat-lbl">hours left</div></div>`;
+}
+document.getElementById("dash-tabs").addEventListener("click", e => {
+  const btn = e.target.closest(".tab"); if (!btn || btn.closest("#person-tabs")) return;
+  document.querySelectorAll("#dash-tabs .tab").forEach(b => b.classList.remove("on"));
+  btn.classList.add("on"); dashUnit = btn.dataset.u; renderDashGrid();
+});
+
+/* ---- dashboard: people ---- */
+function renderDashPnav() {
+  const nav = document.getElementById("dash-pnav"); nav.innerHTML = "";
+  state.people.forEach((p, i) => {
+    const bg = PALETTE[i%PALETTE.length];
+    const tc = isDark() ? PTXT_L[i%PTXT_L.length] : PTXT_D[i%PTXT_D.length];
+    const isPet = p.type !== "person";
+    const btn = document.createElement("button");
+    btn.className = "pnav-btn" + (i===activeP?" on":"");
+    btn.innerHTML = `<div class="pnav-av" style="background:${isPet?"transparent":bg};color:${tc};font-size:${isPet?"14px":"10px"}">${initials(p.name,p.type)}</div>${p.name||TYPE_LABEL[p.type]||"…"}`;
+    btn.onclick = () => { activeP = i; renderDashPnav(); renderPersonDetail(); };
+    nav.appendChild(btn);
+  });
+  const addWrap = document.createElement("div");
+  addWrap.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;";
+  ["person","dog","cat"].forEach(type => {
+    const ab = document.createElement("button");
+    ab.className = "pnav-btn pnav-add";
+    ab.textContent = TYPE_EMOJI[type] + " add";
+    ab.onclick = () => addPerson(type, true);
+    addWrap.appendChild(ab);
+  });
+  nav.appendChild(addWrap);
+}
+
+function buildPersonGrid(age, exp, p, unit) {
+  const myTotal = unit==="years"?exp:unit==="months"?exp*12:exp*52;
+  const thTotal = unit==="years"?p.exp:unit==="months"?p.exp*12:p.exp*52;
+  const myLived = unit==="years"?age:unit==="months"?age*12:age*52;
+  const thLived = unit==="years"?p.age:unit==="months"?p.age*12:p.age*52;
+  const myRem = myTotal - myLived;
+  const thRem = thTotal - thLived;
+  const shared = Math.max(0, Math.min(myRem, thRem));
+  const past = Math.min(myLived, thLived);
+  const total = Math.max(myTotal, thTotal);
+  const sz = unit==="years"?16:unit==="months"?10:8;
+  let h = "";
+  for (let u = 0; u < total; u++) {
+    const inMe = u < myTotal, inThem = u < thTotal;
+    let cls;
+    if (u < past) cls = "past";
+    else if (u < past + shared && inMe && inThem) cls = "shared";
+    else if (inMe || inThem) cls = "alone";
+    else continue;
+    h += `<span class="cell ${cls}" style="width:${sz}px;height:${sz}px;"></span>`;
+  }
+  return { html: h, shared, myRem, thRem, past };
+}
+
+function renderPersonDetail() {
+  const c = document.getElementById("dash-person-detail");
+  if (!c || !state.people.length) { c.innerHTML = ""; return; }
+  if (activeP >= state.people.length) activeP = 0;
+  const p = state.people[activeP];
+  const color = PALETTE[activeP % PALETTE.length];
+  const age = state.age, exp = state.exp;
+  const myRemYrs = Math.max(0, exp - age);
+  const thRemYrs = Math.max(0, p.exp - p.age);
+  const sharedYrs = Math.max(0, Math.min(myRemYrs, thRemYrs));
+  const sharedWks = Math.round(sharedYrs * 52);
+  const cmap = {daily:365, weekly:52, monthly:12, yearly:2};
+  const encLeft = Math.round(sharedYrs * (cmap[p.contact]||52));
+  const encName = {daily:"days",weekly:"weeks",monthly:"months",yearly:"years"}[p.contact];
+  const whoGoes = myRemYrs < thRemYrs ? "me" : "them";
+  const myAgeAtEnd = Math.round(age + sharedYrs);
+  const thAgeAtEnd = Math.round(p.age + sharedYrs);
+  const myBY=2026-age, thBY=2026-p.age;
+  const myDY=myBY+exp, thDY=thBY+p.exp;
+  const tlMin=Math.min(myBY,thBY), tlMax=Math.max(myDY,thDY), tlSpan=Math.max(1,tlMax-tlMin);
+  const ovStart=Math.max(2026,myBY,thBY);
+  const myS=((myBY-tlMin)/tlSpan*100).toFixed(1), myW=(exp/tlSpan*100).toFixed(1);
+  const thS=((thBY-tlMin)/tlSpan*100).toFixed(1), thW=(p.exp/tlSpan*100).toFixed(1);
+  const ovS=((ovStart-tlMin)/tlSpan*100).toFixed(1), ovW=(sharedYrs/tlSpan*100).toFixed(1);
+  const pastEnc = Math.round(Math.min(p.age, age) * (cmap[p.contact]||52));
+  const totalEnc = Math.round((sharedYrs + Math.min(p.age, age)) * (cmap[p.contact]||52));
+  const pctElapsed = totalEnc > 0 ? Math.round((pastEnc/totalEnc)*100) : 0;
+  const { html: gridH } = buildPersonGrid(age, exp, p, personUnit);
+  const isPet = p.type !== "person";
+  let verdict = "";
+  if (isPet) verdict = `${p.name||TYPE_LABEL[p.type]} doesn't know any of this. You do. You have roughly <strong>${encLeft.toLocaleString()} ${encName}</strong> left together. After that, the absence will be permanent.`;
+  else if (whoGoes==="me") verdict = `If the statistics hold, you'll leave first — at <strong>${myAgeAtEnd}</strong>, while ${p.name} is <strong>${thAgeAtEnd}</strong>. You have <strong>${encLeft.toLocaleString()} ${encName}</strong> between now and that moment.`;
+  else verdict = `If the statistics hold, you'll watch ${p.name} go — at <strong>${thAgeAtEnd}</strong>, while you're <strong>${myAgeAtEnd}</strong>. You have <strong>${encLeft.toLocaleString()} ${encName}</strong> left. None of them are the last one yet — but one of them will be.`;
+
+  c.innerHTML = `
+    <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px">
+      <div style="font-size:36px;font-weight:500;font-family:var(--mono);color:var(--text);line-height:1">${sharedWks.toLocaleString()}</div>
+      <div style="font-size:13px;color:var(--text2)">weeks left together</div>
+    </div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;font-family:var(--serif)">~${Math.round(sharedYrs)} more years · ${whoGoes==="me"?"you leave at "+myAgeAtEnd:"goodbye at their age "+thAgeAtEnd}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+      <div class="eyebrow" style="margin-bottom:0">Shared timeline</div>
+      <div class="tabs" id="person-tabs" style="margin-bottom:0">
+        <button class="tab${personUnit==="weeks"?" on":""}" data-pu="weeks">Weeks</button>
+        <button class="tab${personUnit==="months"?" on":""}" data-pu="months">Months</button>
+        <button class="tab${personUnit==="years"?" on":""}" data-pu="years">Years</button>
+      </div>
+    </div>
+    <div class="legend">
+      <span class="leg"><span class="leg-dot" style="background:#444441"></span>past</span>
+      <span class="leg"><span class="leg-dot" style="background:#1D9E75"></span>shared remaining</span>
+      <span class="leg"><span class="leg-dot" style="background:var(--green-bg);border:0.5px solid var(--green-border);opacity:0.5"></span>alone</span>
+    </div>
+    <div class="grid-wrap">${gridH}</div>
+    <div style="margin-bottom:1.25rem">
+      <div class="tl-row"><div class="tl-lbl">You</div><div class="tl-outer"><div class="tl-seg" style="left:${myS}%;width:${myW}%;background:var(--bg2);border:0.5px solid var(--border2)"></div><div class="tl-seg" style="left:${ovS}%;width:${ovW}%;background:${color}"></div></div><div class="tl-age">${exp}</div></div>
+      <div class="tl-row"><div class="tl-lbl">${p.name||TYPE_LABEL[p.type]}</div><div class="tl-outer"><div class="tl-seg" style="left:${thS}%;width:${thW}%;background:var(--bg2);border:0.5px solid var(--border2)"></div><div class="tl-seg" style="left:${ovS}%;width:${ovW}%;background:${color}"></div></div><div class="tl-age">${p.exp}</div></div>
+    </div>
+    <div class="enc-block">
+      <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px">Encounters remaining</div>
+      <div style="font-size:13px;color:var(--text2);font-family:var(--serif)">At ${p.contact} contact — ${encLeft.toLocaleString()} ${encName} left with ${p.name||TYPE_LABEL[p.type]}.</div>
+      <div class="enc-bar-wrap"><div class="enc-bar" style="width:${Math.min(100,pctElapsed)}%;background:${color}"></div></div>
+      <div style="font-size:11px;color:var(--text2)">${pctElapsed}% of your time together is already behind you</div>
+    </div>
+    <div class="verdict-block"><p>${verdict}</p></div>`;
+
+  document.getElementById("person-tabs").addEventListener("click", e => {
+    const btn = e.target.closest("[data-pu]"); if (!btn) return;
+    personUnit = btn.dataset.pu; renderPersonDetail();
+  });
+}
+
+/* ---- dashboard: audit sliders ---- */
+function renderDashAudit() {
+  const c = document.getElementById("dash-audit-sliders"); c.innerHTML = "";
+  state.audit.forEach((a, i) => {
+    const r = document.createElement("div"); r.className = "audit-row";
+    r.innerHTML = `
+      <div class="audit-lbl">${a.label}<span>${a.sub}</span></div>
+      <input type="range" style="flex:1" min="0" max="16" step="1" value="${a.hpd}" data-dai="${i}">
+      <span class="audit-val" id="dar-${i}">${a.hpd}h</span>`;
+    c.appendChild(r);
+  });
+  c.querySelectorAll("[data-dai]").forEach(sl => {
+    sl.addEventListener("input", e => {
+      const i = parseInt(e.target.dataset.dai);
+      state.audit[i].hpd = parseInt(e.target.value);
+      document.getElementById("dar-"+i).textContent = state.audit[i].hpd + "h";
+      renderBurndown(); renderWhatIf(); scheduleSave();
+    });
+  });
+}
+
+/* ---- burndown + verdict ---- */
+function renderBurndown() {
+  const hl = hoursLeft();
+  const c = document.getElementById("dash-burndown"); c.innerHTML = "";
+  let usedPct = 0;
+  const colors = {"Sleep":"#888780","Screen time":"#EF9F27","Work":"#888780","Commute":"#888780"};
+  state.audit.forEach(a => {
+    const hrs = Math.round(a.hpd * (state.exp-state.age) * 365);
+    const pct = Math.min(55, Math.round((hrs/hl)*100));
+    usedPct += pct;
+    const isScreen = a.label === "Screen time";
+    const div = document.createElement("div"); div.className = "bd-row";
+    div.innerHTML = `
+      <div class="bd-lbl" style="${isScreen?"color:var(--text);font-weight:500":""}">${a.label}</div>
+      <div class="bd-bar-outer"><div class="bd-bar-inner" style="width:${pct}%;background:${colors[a.label]||"#888780"}"></div></div>
+      <div class="bd-pct" style="${isScreen?"color:#EF9F27;font-weight:500":""}">${pct}%</div>`;
+    c.appendChild(div);
+  });
+  const freeP = Math.max(0, 100 - usedPct);
+  const freeDiv = document.createElement("div"); freeDiv.className = "bd-row";
+  freeDiv.innerHTML = `
+    <div class="bd-lbl" style="color:var(--text);font-weight:500">Free life</div>
+    <div class="bd-bar-outer"><div class="bd-bar-inner" style="width:${freeP}%;background:#1D9E75"></div></div>
+    <div class="bd-pct" style="color:#0F6E56;font-weight:500">${freeP}%</div>`;
+  c.appendChild(freeDiv);
+
+  // verdict
+  const otherHrs = state.audit.filter(a=>a.label!=="Screen time").reduce((s,a)=>s+a.hpd*(state.exp-state.age)*365,0);
+  const screenHrs = state.audit.find(a=>a.label==="Screen time").hpd*(state.exp-state.age)*365;
+  const freeYrs = yrs(Math.max(0, hl - otherHrs - screenHrs));
+  const freeRawYrs = yrs(Math.max(0, hl - otherHrs));
+  const screenYrs = yrs(screenHrs);
+  document.getElementById("dash-verdict").innerHTML = `
+    <div class="verdict-line">After sleep, work, and commute, you have <strong>${freeRawYrs} years</strong> of remaining life that aren't already spoken for.</div>
+    <div class="verdict-line punch">You will spend <strong>${screenYrs} of them</strong> on your phone.</div>`;
+}
+
+/* ---- what-if ---- */
+function renderWhatIf() {
+  const sl = document.getElementById("wi-slider"); if (!sl) return;
+  const newHpd = parseFloat(sl.value);
+  document.getElementById("wi-hpd").textContent = newHpd + "h";
+  const hl = hoursLeft();
+  const otherHrs = state.audit.filter(a=>a.label!=="Screen time").reduce((s,a)=>s+a.hpd*(state.exp-state.age)*365,0);
+  const currentScreen = state.audit.find(a=>a.label==="Screen time").hpd*(state.exp-state.age)*365;
+  const newScreen = newHpd*(state.exp-state.age)*365;
+  const currentFree = Math.max(0, hl-otherHrs-currentScreen);
+  const newFree = Math.max(0, hl-otherHrs-newScreen);
+  const delta = newFree - currentFree;
+  const deltaYrs = yrs(Math.abs(delta));
+  const gained = delta > 0;
+  document.getElementById("wi-result").innerHTML = `
+    <div class="wi-card">
+      <div class="wi-val ${gained?"green":"orange"}">${yrs(newFree)}y</div>
+      <div class="wi-lbl">Free years</div>
+      <div class="wi-delta ${gained?"green":"orange"}">${gained?"+":"-"}${deltaYrs}y vs now</div>
+    </div>
+    <div class="wi-card">
+      <div class="wi-val orange">${yrs(newScreen)}y</div>
+      <div class="wi-lbl">On screen</div>
+      <div class="wi-delta ${gained?"green":"orange"}">${gained?"-":"+"}${deltaYrs}y vs now</div>
+    </div>
+    <div class="wi-card">
+      <div class="wi-val" style="color:var(--text)">${Math.round(Math.abs(delta)/8760*365)}</div>
+      <div class="wi-lbl">days ${gained?"reclaimed":"lost"}/year</div>
+      <div class="wi-delta" style="color:var(--text2)">${Math.round(Math.abs(delta)/24)} days total</div>
+    </div>`;
+}
+document.getElementById("wi-slider").addEventListener("input", renderWhatIf);
+
+/* ---- topbar buttons ---- */
+document.getElementById("btn-settings").onclick = () => go("s-you");
+document.getElementById("btn-reset").onclick = () => {
+  if (!confirm("Reset all data?")) return;
+  try { localStorage.removeItem(STORE_KEY); } catch(e) {}
+  state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  go("s-splash"); renderSplash();
+};
+
+/* ---- init ---- */
+renderSplash();
+</script>
+</body>
+</html>
