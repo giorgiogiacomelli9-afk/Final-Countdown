@@ -6,34 +6,37 @@
 <title>The Final Countdown</title>
 <style>
   :root {
-    --bg: #ffffff;
-    --bg2: #f5f5f4;
-    --text: #1a1a18;
-    --text2: #6b6b67;
-    --border: #e2e2df;
-    --border2: #c8c8c4;
-    --green: #1D9E75;
-    --green-bg: #E1F5EE;
-    --green-border: #5DCAA5;
-    --green-dark: #085041;
-    --orange: #EF9F27;
+    --bg: #F7F4EE;
+    --bg2: #EDE5D8;
+    --text: #2C2820;
+    --text2: #8A7A68;
+    --border: #D8CCBC;
+    --border2: #C0B49A;
+    --green: #5A9478;
+    --green-bg: #D4E8DF;
+    --green-border: #5A9478;
+    --green-dark: #2C5A46;
+    --orange: #D4852A;
     --red-text: #A32D2D;
     --red-border: #F09595;
     --red-bg: #FCEBEB;
+    --past: #2C2820;
+    --accent: #D4852A;
     --font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --mono: "SF Mono", "Fira Code", "Consolas", monospace;
     --serif: Georgia, "Times New Roman", serif;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1a1a18;
-      --bg2: #242422;
-      --text: #f0f0ee;
-      --text2: #8a8a86;
-      --border: #333331;
-      --border2: #4a4a47;
-      --green-bg: #085041;
-      --green-border: #1D9E75;
+      --bg: #1E1A14;
+      --bg2: #2A2418;
+      --text: #F0EAE0;
+      --text2: #8A7A68;
+      --border: #3A3028;
+      --border2: #4A3E30;
+      --green-bg: #1A3828;
+      --green-border: #5A9478;
+      --past: #5A5248;
     }
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,9 +44,9 @@
   .container { max-width: 560px; margin: 0 auto; padding: 0 20px 80px; }
 
   /* screens */
-  .screen { display: none; padding: 2rem 0; animation: fadeIn 0.25s ease; }
+  .screen { display: none; padding: 2rem 0; animation: fadeIn 0.75s cubic-bezier(0.4,0,0.2,1); }
   .screen.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 
   /* typography */
   .eyebrow { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text2); margin-bottom: 0.6rem; }
@@ -108,7 +111,7 @@
   .cell {
     display: inline-block; border-radius: 1px; margin: 1.5px; width: 8px; height: 8px;
   }
-  .cell.past { background: #444441; }
+  .cell.past { background: var(--past); }
   .cell.future { background: var(--green-bg); border: 0.5px solid var(--green-border); }
   .cell.shared { background: var(--green); }
   .cell.alone { background: var(--green-bg); border: 0.5px solid var(--green-border); opacity: 0.35; }
@@ -167,12 +170,13 @@
   .audit-lbl span { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); margin-top: 1px; }
   .audit-val { font-size: 13px; font-weight: 500; font-family: var(--mono); min-width: 26px; text-align: right; color: var(--text); }
 
-  /* burndown */
-  .bd-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .bd-lbl { font-size: 12px; color: var(--text2); width: 96px; flex-shrink: 0; }
-  .bd-bar-outer { flex: 1; height: 10px; background: var(--bg2); border-radius: 2px; overflow: hidden; }
-  .bd-bar-inner { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
-  .bd-pct { font-size: 11px; font-family: var(--mono); color: var(--text2); min-width: 32px; text-align: right; }
+  /* donut chart */
+  .donut-wrap { display: flex; align-items: center; gap: 24px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 140px; }
+  .donut-legend-row { display: flex; align-items: center; gap: 8px; }
+  .donut-legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .donut-legend-lbl { font-size: 12px; color: var(--text2); flex: 1; }
+  .donut-legend-pct { font-size: 12px; font-weight: 500; font-family: var(--mono); color: var(--text); }
 
   /* verdict */
   .verdict-line {
@@ -200,7 +204,7 @@
   .enc-block { border: 0.5px solid var(--border); border-radius: 10px; padding: 1.1rem; margin-bottom: 1rem; }
   .enc-bar-wrap { height: 5px; background: var(--bg2); border-radius: 3px; overflow: hidden; margin: 10px 0 6px; }
   .enc-bar { height: 100%; border-radius: 3px; }
-  .verdict-block { padding: 1.1rem; border-left: 3px solid #888780; border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; }
+  .verdict-block { padding: 1.1rem; border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; }
   .verdict-block p { font-size: 14px; color: var(--text2); line-height: 1.8; font-family: var(--serif); }
   .verdict-block strong { color: var(--text); font-weight: 500; }
   .tl-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
@@ -219,6 +223,30 @@
   .saved-badge { font-size: 11px; color: var(--text2); opacity: 0; transition: opacity .4s; margin-left: 8px; }
   .saved-badge.show { opacity: 1; }
 
+  /* profile card */
+  .profile-card {
+    background: var(--bg2); border-radius: 12px; padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; margin-bottom: 1.75rem; flex-wrap: wrap;
+  }
+  .profile-left { display: flex; align-items: center; gap: 12px; }
+  .profile-avatar {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 500; font-family: var(--mono);
+    color: #FAF0E0; flex-shrink: 0;
+  }
+  .profile-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .profile-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .profile-actions { display: flex; gap: 8px; }
+  .profile-btn {
+    font-size: 12px; color: var(--text2); background: var(--bg);
+    border: 0.5px solid var(--border); border-radius: 8px;
+    padding: 6px 12px; cursor: pointer; font-family: var(--font);
+    display: flex; align-items: center; gap: 5px; white-space: nowrap;
+  }
+  .profile-btn:hover { color: var(--text); background: var(--bg2); border-color: var(--border2); }
+
   /* splash */
   .returning-banner {
     background: var(--bg2); border-radius: 10px; padding: 1rem 1.25rem;
@@ -231,9 +259,133 @@
   }
   .rb-btn:hover { opacity: .82; }
 
-  /* colors */
-  .green { color: #0F6E56; }
-  .orange { color: #EF9F27; }
+  /* ── MINDFUL WALL ── */
+  .wall-transition { padding: 1.5rem 0 0.5rem; text-align: center; }
+  .wall-transition-line { font-size: 13px; color: var(--text2); font-family: var(--serif); font-style: italic; margin-bottom: 0.5rem; }
+  .wall-transition-rule { border: none; border-top: 0.5px solid var(--border); margin: 1rem 0 1.75rem; }
+
+  .cal-card { background: var(--bg2); border-radius: 14px; padding: 14px; margin-bottom: 1rem; }
+  .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .cal-month-label { font-size: 14px; font-weight: 500; color: var(--text); }
+  .cal-nav { background: none; border: none; font-size: 22px; color: var(--text2); cursor: pointer; padding: 0 8px; line-height: 1; font-family: var(--font); }
+  .cal-nav:hover { color: var(--text); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+  .cal-dow { font-size: 9px; text-align: center; color: var(--text2); padding-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; opacity: .7; }
+  .cal-day {
+    aspect-ratio: 1; border-radius: 7px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; font-size: 11px;
+    cursor: pointer; transition: all .15s; border: 1.5px solid transparent;
+    gap: 2px; color: var(--text2);
+  }
+  .cal-day.empty { cursor: default; pointer-events: none; }
+  .cal-day:not(.empty):hover { filter: brightness(.93); }
+  .cal-day.today { outline: 2px solid var(--text); outline-offset: 1px; }
+  .cal-day.cal-selected { border: 2px solid var(--text) !important; }
+  .cal-day.h0 { background: var(--bg2); color: var(--text2); }
+  .cal-day.h1 { background: #F5C9A0; color: #6B3A10; }
+  .cal-day.h2 { background: #E8984A; color: #FAF0E0; }
+  .cal-day.h3 { background: #D4852A; color: #FAF0E0; font-weight: 500; }
+  .cal-day.h4 { background: #B86820; color: #FAF0E0; font-weight: 600; }
+  .cal-dots { display: flex; gap: 2px; justify-content: center; margin-top: 2px; }
+  .cal-dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .6; }
+  .cal-legend { display: flex; align-items: center; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
+  .cal-leg-swatch { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
+  .cal-leg-label { font-size: 10px; color: var(--text2); }
+
+  .wall-people { background: var(--bg); border: 0.5px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 1rem; }
+  .wall-person-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
+  .wall-person-row:last-child { border-bottom: none; }
+  .wp-av { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; }
+  .wp-info { flex: 1; min-width: 0; }
+  .wp-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .wp-meta { font-size: 10px; color: var(--text2); margin-top: 1px; }
+  .wp-bar-wrap { height: 3px; background: var(--bg2); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+  .wp-bar-fill { height: 100%; border-radius: 2px; transition: width .4s; }
+  .wp-log-btn {
+    font-size: 11px; color: var(--accent); background: #F5E8D5;
+    border: 0.5px solid #E8C898; border-radius: 6px; padding: 5px 10px;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0; font-family: var(--font);
+    transition: all .15s;
+  }
+  .wp-log-btn:hover { background: #EDD4A8; }
+  .wp-log-btn.wp-active { background: var(--accent); color: #FAF0E0; border-color: var(--accent); }
+
+  .wall-form { background: var(--bg); border: 0.5px solid var(--border); border-radius: 14px; padding: 14px; }
+  .wf-date-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .wf-date-label { font-size: 13px; font-weight: 500; color: var(--text); }
+  #wf-date-input { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+  .wf-change-btn {
+    font-size: 11px; color: var(--text2); background: var(--bg2);
+    border: 0.5px solid var(--border); border-radius: 6px; padding: 5px 10px;
+    cursor: pointer; font-family: var(--font); transition: all .15s;
+  }
+  .wf-change-btn:hover { border-color: var(--border2); color: var(--text); }
+  .wf-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+  .wf-row:last-child { margin-bottom: 0; }
+  .wf-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--text2); width: 56px; flex-shrink: 0; padding-top: 9px; }
+  .wf-content { flex: 1; }
+  .wf-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .wf-chip {
+    padding: 5px 11px; border-radius: 100px; border: 0.5px solid var(--border);
+    background: var(--bg2); font-size: 12px; color: var(--text2); cursor: pointer; transition: all .15s;
+  }
+  .wf-chip:hover { border-color: var(--border2); }
+  .wf-chip.wf-on { border-color: var(--green); background: var(--green-bg); color: var(--green-dark); }
+  .wf-chip.wf-solo.wf-on { border-color: var(--accent); background: #F5E8D5; color: #8A4E10; }
+  .wf-emoji-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .wf-eb {
+    width: 36px; height: 36px; border-radius: 9px; border: 0.5px solid var(--border);
+    background: var(--bg2); cursor: pointer; font-size: 17px; display: flex;
+    align-items: center; justify-content: center; transition: all .15s;
+  }
+  .wf-eb:hover { border-color: var(--border2); background: var(--bg); }
+  .wf-eb.wf-on { border-color: var(--accent); background: #F5E8D5; }
+  .wf-textarea {
+    width: 100%; border: 0.5px solid var(--border); border-radius: 9px;
+    padding: 9px 11px; font-size: 13px; font-family: var(--serif);
+    color: var(--text); background: var(--bg2); resize: none; outline: none; line-height: 1.6;
+  }
+  .wf-textarea:focus { border-color: var(--border2); }
+  .wf-save {
+    background: var(--text); color: var(--bg); border: none; border-radius: 9px;
+    padding: 11px; font-size: 13px; font-weight: 500; cursor: pointer;
+    font-family: var(--font); width: 100%; margin-top: 10px; transition: opacity .15s;
+  }
+  .wf-save:hover { opacity: .85; }
+  .wf-save:disabled { opacity: .35; cursor: default; }
+  .wf-toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: var(--bg); padding: 10px 20px; border-radius: 100px;
+    font-size: 13px; opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap; z-index: 100;
+  }
+  .wf-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* wall CTA button */
+  .wall-cta-btn {
+    width: 100%; margin-top: 1.5rem; padding: 18px 20px;
+    background: var(--bg2); border: 0.5px solid var(--border2);
+    border-radius: 14px; cursor: pointer; font-family: var(--font);
+    text-align: left; transition: all .2s; display: block;
+  }
+  .wall-cta-btn:hover { background: var(--bg3,#DDD0C0); border-color: var(--accent); }
+  .wall-cta-title { display: block; font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .wall-cta-sub { display: block; font-size: 13px; color: var(--text2); font-family: var(--serif); font-style: italic; }
+
+  /* day entries review */
+  .day-entries-wrap { margin-bottom: 1rem; }
+  .day-entries-header { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+  .day-entry-card {
+    background: var(--bg); border: 0.5px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+  }
+  .de-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .de-tag { font-size: 11px; padding: 3px 8px; border-radius: 100px; background: var(--green-bg); color: var(--green-dark); border: 0.5px solid var(--green); }
+  .de-tag.solo { background: #F5E8D5; color: #8A4E10; border-color: var(--accent); }
+  .de-emoji { font-size: 15px; }
+  .de-note { font-size: 13px; color: var(--text2); font-family: var(--serif); line-height: 1.6; }
+  .de-note.empty { font-style: italic; opacity: .55; }
+  .de-delete { margin-left: auto; font-size: 11px; color: var(--text2); background: none; border: 0.5px solid var(--border); cursor: pointer; font-family: var(--font); padding: 3px 8px; border-radius: 5px; flex-shrink: 0; }
+  .de-delete:hover { color: var(--red-text); border-color: var(--red-border); background: var(--red-bg); }
 </style>
 </head>
 <body>
@@ -258,10 +410,11 @@
     <div class="field"><label>Your age</label><input type="number" id="my-age" min="1" max="99" value="35"></div>
     <div class="field"><label>Model</label>
       <select id="my-exp">
-        <option value="83">Global avg (83)</option>
-        <option value="80">Male western (80)</option>
-        <option value="85">Female western (85)</option>
-        <option value="90">Optimistic (90)</option>
+        <option value="73">Global avg (73)</option>
+        <option value="79">Moderate health (79)</option>
+        <option value="83" selected>Good health (83)</option>
+        <option value="87">Very healthy (87)</option>
+        <option value="93">Exceptional (93)</option>
       </select>
     </div>
   </div>
@@ -296,13 +449,7 @@
 
 <!-- DASHBOARD -->
 <div class="screen" id="s-dashboard">
-  <div class="dash-topbar">
-    <div style="display:flex;align-items:center;gap:6px">
-      <button class="back-link" id="btn-settings">settings</button>
-      <span class="saved-badge" id="saved-badge">· saved</span>
-    </div>
-    <button class="btn-danger" id="btn-reset">reset</button>
-  </div>
+  <div id="dash-profile-card"></div>
 
   <!-- Life grid -->
   <div class="eyebrow">Your life</div>
@@ -327,17 +474,13 @@
 
   <hr class="divider">
 
-  <!-- Audit -->
-  <div class="eyebrow">Time audit — hours per day</div>
-  <div id="dash-audit-sliders" style="margin-bottom:1.75rem"></div>
-
-  <div class="eyebrow" style="margin-bottom:1rem">Where your remaining life goes</div>
+  <!-- Time audit: donut + what-if only -->
+  <div class="eyebrow">How your remaining life is distributed</div>
   <div id="dash-burndown" style="margin-bottom:1.5rem"></div>
-
   <div id="dash-verdict" style="margin-bottom:2rem"></div>
 
   <div class="whatif">
-    <div class="whatif-title">What if you reclaimed some of it?</div>
+    <div class="whatif-title">What if you spent less time on your phone?</div>
     <div class="whatif-slider-row">
       <label>Screen time</label>
       <input type="range" id="wi-slider" min="0" max="8" step="0.5" value="4" style="flex:1;min-width:80px">
@@ -346,15 +489,100 @@
     </div>
     <div class="wi-cards" id="wi-result"></div>
   </div>
+
+  <!-- transition to wall -->
+  <div class="wall-transition">
+    <p class="wall-transition-line">The numbers show what's at stake.</p>
+    <button class="wall-cta-btn" id="btn-go-wall">
+      <span class="wall-cta-title">Record a mindful moment</span>
+      <span class="wall-cta-sub">Make quality time count — tap to open your moments wall</span>
+    </button>
+  </div>
+
 </div>
+
+<!-- MINDFUL WALL -->
+<div class="screen" id="s-wall">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.75rem">
+    <button class="back-link" id="btn-wall-back">← back</button>
+  </div>
+  <div class="eyebrow">Mindful moments</div>
+
+  <div class="cal-card">
+    <div class="cal-header">
+      <button class="cal-nav" id="wall-prev-mo">‹</button>
+      <span class="cal-month-label" id="wall-cal-label"></span>
+      <button class="cal-nav" id="wall-next-mo">›</button>
+    </div>
+    <div class="cal-grid" id="wall-cal-grid"></div>
+    <div class="cal-legend" style="margin-top:10px">
+      <div class="cal-leg-swatch" style="background:var(--bg2);border:0.5px solid var(--border)"></div>
+      <div class="cal-leg-swatch" style="background:#F5C9A0"></div>
+      <div class="cal-leg-swatch" style="background:#E8984A"></div>
+      <div class="cal-leg-swatch" style="background:#D4852A"></div>
+      <div class="cal-leg-swatch" style="background:#B86820"></div>
+      <span class="cal-leg-label">0 → 4+ moments</span>
+    </div>
+    <p style="font-size:11px;color:var(--text2);margin-top:10px;font-style:italic">Tap a day on the calendar to select a date</p>
+  </div>
+
+  <!-- entries for selected day -->
+  <div id="wall-day-entries"></div>
+
+  <div class="wall-people" id="wall-people-dash"></div>
+
+  <div class="wall-form">
+    <div class="wf-date-row">
+      <span class="wf-date-label" id="wf-date-label">Today</span>
+      <input type="date" id="wf-date-input" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px">
+    </div>
+    <div class="wf-row">
+      <div class="wf-lbl">With</div>
+      <div class="wf-content"><div class="wf-chips" id="wf-with-chips"></div></div>
+    </div>
+    <div class="wf-row">
+      <div class="wf-lbl">Mood</div>
+      <div class="wf-content">
+        <div class="wf-emoji-row" id="wf-mood-btns">
+          <button class="wf-eb" data-mood="😔">😔</button>
+          <button class="wf-eb" data-mood="😐">😐</button>
+          <button class="wf-eb" data-mood="🙂">🙂</button>
+          <button class="wf-eb" data-mood="😊">😊</button>
+          <button class="wf-eb" data-mood="🥰">🥰</button>
+        </div>
+      </div>
+    </div>
+    <div class="wf-row">
+      <div class="wf-lbl">Weather</div>
+      <div class="wf-content">
+        <div class="wf-emoji-row" id="wf-wx-btns">
+          <button class="wf-eb" data-wx="☀️">☀️</button>
+          <button class="wf-eb" data-wx="⛅">⛅</button>
+          <button class="wf-eb" data-wx="🌧">🌧</button>
+          <button class="wf-eb" data-wx="❄️">❄️</button>
+        </div>
+      </div>
+    </div>
+    <div class="wf-row">
+      <div class="wf-lbl">Note</div>
+      <div class="wf-content">
+        <textarea class="wf-textarea" id="wf-note" rows="3" placeholder="What happened? A few words is enough."></textarea>
+      </div>
+    </div>
+    <button class="wf-save" id="wf-save-btn" disabled>Save moment</button>
+  </div>
+
+</div>
+
+<div class="wf-toast" id="wf-toast"></div>
 
 </div><!-- /container -->
 
 <script>
 const STORE_KEY = "tfc_v3";
-const PALETTE = ["#1D9E75","#BA7517","#D4537E","#378ADD","#639922","#D85A30"];
-const PTXT_D  = ["#085041","#633806","#72243E","#0C447C","#27500A","#993C1D"];
-const PTXT_L  = ["#E1F5EE","#FAEEDA","#FBEAF0","#E6F1FB","#EAF3DE","#FAECE7"];
+const PALETTE = ["#5A9478","#D4852A","#B85C7A","#6B8FAE","#8A7A5A","#7A5A8A"];
+const PTXT_D  = ["#1A3828","#4A2C08","#4A1828","#1C3448","#2C2818","#2C1840"];
+const PTXT_L  = ["#D4E8DF","#F5DFC0","#F4D0DC","#D0DFF0","#E0D8C8","#DDD0F0"];
 const TYPE_EXP   = {person:83, dog:13, cat:16};
 const TYPE_EMOJI = {person:"👤", dog:"🐕", cat:"🐈"};
 const TYPE_LABEL = {person:"person", dog:"dog", cat:"cat"};
@@ -367,10 +595,10 @@ const DEFAULT_STATE = {
     {name:"Micio",age:4,  exp:16, contact:"daily",  type:"cat"},
   ],
   audit: [
-    {label:"Sleep",       sub:"recovery",     hpd:7},
-    {label:"Screen time", sub:"phone/social", hpd:4},
-    {label:"Work",        sub:"paid hours",   hpd:8},
-    {label:"Commute",     sub:"transit/drive",hpd:1},
+    {label:"Sleep",       sub:"recovery",     hpd:7,   min:4,  max:12,  step:0.5},
+    {label:"Screen time", sub:"phone/social", hpd:4,   min:0,  max:8,   step:0.5},
+    {label:"Work",        sub:"paid hours",   hpd:8,   min:0,  max:16,  step:0.5},
+    {label:"Commute",     sub:"transit/drive",hpd:1,   min:0,  max:4,   step:0.25},
   ]
 };
 
@@ -433,7 +661,8 @@ function go(sid) {
   if (sid === "s-you")       { syncInputs(); updateYouPreview(); }
   if (sid === "s-people")    renderObPeople();
   if (sid === "s-audit")     renderObAudit();
-  if (sid === "s-dashboard") { renderDashGrid(); renderDashPnav(); renderPersonDetail(); renderDashAudit(); renderBurndown(); renderWhatIf(); }
+  if (sid === "s-dashboard") { renderProfileCard(); renderDashGrid(); renderDashPnav(); renderPersonDetail(); renderBurndown(); renderWhatIf(); bindWallCTA(); }
+  if (sid === "s-wall")      { renderWall(); }
   window.scrollTo(0,0);
 }
 
@@ -541,21 +770,27 @@ document.getElementById("btn-people-next").onclick = () => go("s-audit");
 document.getElementById("btn-people-skip").onclick = () => go("s-audit");
 
 /* ---- step 3 ---- */
+function fmtHpd(v) {
+  if (v === Math.floor(v)) return v + "h";
+  const h = Math.floor(v);
+  const m = Math.round((v - h) * 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
 function renderObAudit() {
   const c = document.getElementById("ob-audit-rows"); c.innerHTML = "";
   state.audit.forEach((a, i) => {
     const r = document.createElement("div"); r.className = "audit-row";
     r.innerHTML = `
       <div class="audit-lbl">${a.label}<span>${a.sub}</span></div>
-      <input type="range" style="flex:1" min="0" max="16" step="1" value="${a.hpd}" data-ai="${i}">
-      <span class="audit-val" id="oar-${i}">${a.hpd}h</span>`;
+      <input type="range" style="flex:1" min="${a.min??0}" max="${a.max??16}" step="${a.step??1}" value="${a.hpd}" data-ai="${i}">
+      <span class="audit-val" id="oar-${i}">${fmtHpd(a.hpd)}</span>`;
     c.appendChild(r);
   });
   c.querySelectorAll("[data-ai]").forEach(sl => {
     sl.addEventListener("input", e => {
       const i = parseInt(e.target.dataset.ai);
-      state.audit[i].hpd = parseInt(e.target.value);
-      document.getElementById("oar-"+i).textContent = state.audit[i].hpd + "h";
+      state.audit[i].hpd = parseFloat(e.target.value);
+      document.getElementById("oar-"+i).textContent = fmtHpd(state.audit[i].hpd);
       scheduleSave();
     });
   });
@@ -672,10 +907,15 @@ function renderPersonDetail() {
   else if (whoGoes==="me") verdict = `If the statistics hold, you'll leave first — at <strong>${myAgeAtEnd}</strong>, while ${p.name} is <strong>${thAgeAtEnd}</strong>. You have <strong>${encLeft.toLocaleString()} ${encName}</strong> between now and that moment.`;
   else verdict = `If the statistics hold, you'll watch ${p.name} go — at <strong>${thAgeAtEnd}</strong>, while you're <strong>${myAgeAtEnd}</strong>. You have <strong>${encLeft.toLocaleString()} ${encName}</strong> left. None of them are the last one yet — but one of them will be.`;
 
+  const sharedMonths = Math.round(sharedYrs * 12);
+  const sharedYrsRounded = Math.round(sharedYrs);
+  const heroNum   = personUnit==="years" ? sharedYrsRounded : personUnit==="months" ? sharedMonths : sharedWks;
+  const heroLabel = personUnit==="years" ? "years left together" : personUnit==="months" ? "months left together" : "weeks left together";
+
   c.innerHTML = `
     <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px">
-      <div style="font-size:36px;font-weight:500;font-family:var(--mono);color:var(--text);line-height:1">${sharedWks.toLocaleString()}</div>
-      <div style="font-size:13px;color:var(--text2)">weeks left together</div>
+      <div style="font-size:36px;font-weight:500;font-family:var(--mono);color:var(--text);line-height:1">${heroNum.toLocaleString()}</div>
+      <div style="font-size:13px;color:var(--text2)">${heroLabel}</div>
     </div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;font-family:var(--serif)">~${Math.round(sharedYrs)} more years · ${whoGoes==="me"?"you leave at "+myAgeAtEnd:"goodbye at their age "+thAgeAtEnd}</div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
@@ -710,59 +950,86 @@ function renderPersonDetail() {
   });
 }
 
-/* ---- dashboard: audit sliders ---- */
-function renderDashAudit() {
-  const c = document.getElementById("dash-audit-sliders"); c.innerHTML = "";
-  state.audit.forEach((a, i) => {
-    const r = document.createElement("div"); r.className = "audit-row";
-    r.innerHTML = `
-      <div class="audit-lbl">${a.label}<span>${a.sub}</span></div>
-      <input type="range" style="flex:1" min="0" max="16" step="1" value="${a.hpd}" data-dai="${i}">
-      <span class="audit-val" id="dar-${i}">${a.hpd}h</span>`;
-    c.appendChild(r);
-  });
-  c.querySelectorAll("[data-dai]").forEach(sl => {
-    sl.addEventListener("input", e => {
-      const i = parseInt(e.target.dataset.dai);
-      state.audit[i].hpd = parseInt(e.target.value);
-      document.getElementById("dar-"+i).textContent = state.audit[i].hpd + "h";
-      renderBurndown(); renderWhatIf(); scheduleSave();
-    });
-  });
-}
-
-/* ---- burndown + verdict ---- */
+/* ---- burndown: donut chart ---- */
 function renderBurndown() {
   const hl = hoursLeft();
-  const c = document.getElementById("dash-burndown"); c.innerHTML = "";
-  let usedPct = 0;
-  const colors = {"Sleep":"#888780","Screen time":"#EF9F27","Work":"#888780","Commute":"#888780"};
-  state.audit.forEach(a => {
-    const hrs = Math.round(a.hpd * (state.exp-state.age) * 365);
-    const pct = Math.min(55, Math.round((hrs/hl)*100));
-    usedPct += pct;
-    const isScreen = a.label === "Screen time";
-    const div = document.createElement("div"); div.className = "bd-row";
-    div.innerHTML = `
-      <div class="bd-lbl" style="${isScreen?"color:var(--text);font-weight:500":""}">${a.label}</div>
-      <div class="bd-bar-outer"><div class="bd-bar-inner" style="width:${pct}%;background:${colors[a.label]||"#888780"}"></div></div>
-      <div class="bd-pct" style="${isScreen?"color:#EF9F27;font-weight:500":""}">${pct}%</div>`;
-    c.appendChild(div);
-  });
-  const freeP = Math.max(0, 100 - usedPct);
-  const freeDiv = document.createElement("div"); freeDiv.className = "bd-row";
-  freeDiv.innerHTML = `
-    <div class="bd-lbl" style="color:var(--text);font-weight:500">Free life</div>
-    <div class="bd-bar-outer"><div class="bd-bar-inner" style="width:${freeP}%;background:#1D9E75"></div></div>
-    <div class="bd-pct" style="color:#0F6E56;font-weight:500">${freeP}%</div>`;
-  c.appendChild(freeDiv);
+  const cs = getComputedStyle(document.documentElement);
+  const clrAccent = '#D4852A';
+  const clrPast   = '#2C2820';
+  const clrGreen  = '#5A9478';
+  const clrBg2    = cs.getPropertyValue('--bg2').trim() || '#EDE5D8';
 
-  // verdict
-  const otherHrs = state.audit.filter(a=>a.label!=="Screen time").reduce((s,a)=>s+a.hpd*(state.exp-state.age)*365,0);
+  const otherHrs  = state.audit.filter(a=>a.label!=="Screen time").reduce((s,a)=>s+a.hpd*(state.exp-state.age)*365,0);
   const screenHrs = state.audit.find(a=>a.label==="Screen time").hpd*(state.exp-state.age)*365;
-  const freeYrs = yrs(Math.max(0, hl - otherHrs - screenHrs));
+  const freeHrs   = Math.max(0, hl - otherHrs - screenHrs);
+
+  // Okabe-Ito colorblind-safe palette
+  const FIXED_COLORS = ["#3D3D3D","#777777","#BBBBBB"];
+  const fixedAudit = state.audit.filter(a=>a.label!=="Screen time");
+
+  const segments = [
+    ...fixedAudit.map((a,i)=>({
+      label: a.label,
+      hrs: a.hpd*(state.exp-state.age)*365,
+      color: FIXED_COLORS[i % FIXED_COLORS.length],
+      opacity: 1
+    })),
+    { label:"Screen time", hrs: screenHrs, color: "#E69F00", opacity:1 },
+    { label:"Free life",   hrs: freeHrs,   color: "#56B4E9", opacity:1 },
+  ];
+
+  const total = segments.reduce((s,seg)=>s+seg.hrs, 0);
+  const size = 140, cx = size/2, cy = size/2, r = 62, inner = 34;
+  let startAngle = -Math.PI/2;
+  let paths = "";
+  let gapLines = "";
+
+  segments.forEach(seg => {
+    const pct = seg.hrs / total;
+    const angle = pct * 2 * Math.PI;
+    const endAngle = startAngle + angle;
+    if (pct < 0.001) { startAngle = endAngle; return; }
+    const x1 = cx + r*Math.cos(startAngle), y1 = cy + r*Math.sin(startAngle);
+    const x2 = cx + r*Math.cos(endAngle),   y2 = cy + r*Math.sin(endAngle);
+    const xi1 = cx + inner*Math.cos(startAngle), yi1 = cy + inner*Math.sin(startAngle);
+    const xi2 = cx + inner*Math.cos(endAngle),   yi2 = cy + inner*Math.sin(endAngle);
+    const large = angle > Math.PI ? 1 : 0;
+    paths += `<path d="M${xi1},${yi1} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} L${xi2},${yi2} A${inner},${inner} 0 ${large},0 ${xi1},${yi1} Z" fill="${seg.color}" opacity="${seg.opacity}" />`;
+    // gap line at start of each segment
+    gapLines += `<line x1="${cx+inner*Math.cos(startAngle)}" y1="${cy+inner*Math.sin(startAngle)}" x2="${cx+r*Math.cos(startAngle)}" y2="${cy+r*Math.sin(startAngle)}" stroke="#F7F4EE" stroke-width="2.5"/>`;
+    startAngle = endAngle;
+  });
+
+  const freePct = Math.round((freeHrs/total)*100);
+  const screenPct = Math.round((screenHrs/total)*100);
+  const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#F7F4EE';
+
+  const svgCenterText = `
+    <text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="18" font-weight="500" font-family="monospace" fill="#2C2820">${freePct}%</text>
+    <text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="8" letter-spacing="0.08em" fill="#8A7A68" font-family="-apple-system,sans-serif">FREE</text>`;
+
+  const legendRows = [
+    ...fixedAudit.map((a,i)=>{
+      const p = Math.round((a.hpd*(state.exp-state.age)*365/total)*100);
+      return `<div class="donut-legend-row"><div class="donut-legend-dot" style="background:${FIXED_COLORS[i%FIXED_COLORS.length]}"></div><span class="donut-legend-lbl">${a.label}</span><span class="donut-legend-pct">${p}%</span></div>`;
+    }),
+    `<div class="donut-legend-row"><div class="donut-legend-dot" style="background:#E69F00"></div><span class="donut-legend-lbl">Screen time</span><span class="donut-legend-pct" style="color:#B87A00;font-weight:600">${screenPct}%</span></div>`,
+    `<div class="donut-legend-row"><div class="donut-legend-dot" style="background:#56B4E9"></div><span class="donut-legend-lbl">Free life</span><span class="donut-legend-pct" style="color:#1A7AB0;font-weight:600">${freePct}%</span></div>`,
+  ].join("");
+
+  document.getElementById("dash-burndown").innerHTML = `
+    <div class="donut-wrap">
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="flex-shrink:0">
+        <circle cx="${cx}" cy="${cy}" r="${(r+inner)/2}" fill="none" stroke="${bgColor}" stroke-width="${r-inner+1}"/>
+        ${paths}
+        ${gapLines}
+        ${svgCenterText}
+      </svg>
+      <div class="donut-legend">${legendRows}</div>
+    </div>`;
+
   const freeRawYrs = yrs(Math.max(0, hl - otherHrs));
-  const screenYrs = yrs(screenHrs);
+  const screenYrs  = yrs(screenHrs);
   document.getElementById("dash-verdict").innerHTML = `
     <div class="verdict-line">After sleep, work, and commute, you have <strong>${freeRawYrs} years</strong> of remaining life that aren't already spoken for.</div>
     <div class="verdict-line punch">You will spend <strong>${screenYrs} of them</strong> on your phone.</div>`;
@@ -771,6 +1038,12 @@ function renderBurndown() {
 /* ---- what-if ---- */
 function renderWhatIf() {
   const sl = document.getElementById("wi-slider"); if (!sl) return;
+  // init slider to current screen time value
+  const currentHpd = state.audit.find(a=>a.label==="Screen time").hpd;
+  if (parseFloat(sl.dataset.init) !== currentHpd) {
+    sl.value = currentHpd;
+    sl.dataset.init = currentHpd;
+  }
   const newHpd = parseFloat(sl.value);
   document.getElementById("wi-hpd").textContent = newHpd + "h";
   const hl = hoursLeft();
@@ -801,14 +1074,248 @@ function renderWhatIf() {
 }
 document.getElementById("wi-slider").addEventListener("input", renderWhatIf);
 
-/* ---- topbar buttons ---- */
-document.getElementById("btn-settings").onclick = () => go("s-you");
-document.getElementById("btn-reset").onclick = () => {
-  if (!confirm("Reset all data?")) return;
-  try { localStorage.removeItem(STORE_KEY); } catch(e) {}
-  state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-  go("s-splash"); renderSplash();
-};
+/* ---- profile card ---- */
+function renderProfileCard() {
+  const c = document.getElementById("dash-profile-card"); if (!c) return;
+  const wl = Math.max(0, (state.exp - state.age) * 52);
+  c.innerHTML = `
+    <div class="profile-card">
+      <div class="profile-left">
+        <div class="profile-avatar">${state.age}</div>
+        <div>
+          <div class="profile-name">Age ${state.age} · exp. ${state.exp}</div>
+          <div class="profile-sub">${wl.toLocaleString()} weeks remaining · ${state.people.length} ${state.people.length===1?"person":"people"}<span class="saved-badge" id="saved-badge"> · saved</span></div>
+        </div>
+      </div>
+      <div class="profile-actions">
+        <button class="profile-btn" id="btn-settings">✎ edit</button>
+      </div>
+    </div>`;
+  document.getElementById("btn-settings").onclick = () => go("s-you");
+}
+
+/* ════════════════════════════════
+   MINDFUL WALL
+   ════════════════════════════════ */
+const WALL_KEY = "tfc_wall_v1";
+let wallEntries = [];
+try { wallEntries = JSON.parse(localStorage.getItem(WALL_KEY) || "[]"); } catch(e) { wallEntries = []; }
+
+let wallSelDate = new Date().toISOString().slice(0,10);
+let wallSelWith = [];
+let wallSelMood = "";
+let wallSelWx   = "";
+let wallViewY   = new Date().getFullYear();
+let wallViewM   = new Date().getMonth();
+
+function wallSave() {
+  try { localStorage.setItem(WALL_KEY, JSON.stringify(wallEntries)); } catch(e) {}
+}
+function wallCountOnDate(ds) { return wallEntries.filter(e => e.date === ds).length; }
+function wallCountThisMonth(name) {
+  const n = new Date();
+  return wallEntries.filter(e => {
+    const d = new Date(e.date + "T12:00:00");
+    return e.with.includes(name) && d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear();
+  }).length;
+}
+function wallTotalLogged(name) { return wallEntries.filter(e => e.with.includes(name)).length; }
+function wallStreak(name) {
+  const dates = [...new Set(wallEntries.filter(e=>e.with.includes(name)).map(e=>e.date))].sort().reverse();
+  if (!dates.length) return 0;
+  let s = 0, cur = new Date(); cur.setHours(0,0,0,0);
+  for (const ds of dates) {
+    const d = new Date(ds+"T12:00:00"); d.setHours(0,0,0,0);
+    if (Math.round((cur-d)/86400000) <= 1) { s++; cur = d; } else break;
+  }
+  return s;
+}
+function wallFmtDate(ds) {
+  const d = new Date(ds+"T12:00:00");
+  return d.toLocaleDateString("en", {weekday:"short", day:"numeric", month:"short", year:"numeric"});
+}
+function wallDaysInMonth(y,m) { return new Date(y,m+1,0).getDate(); }
+function wallFirstDow(y,m) { let d=new Date(y,m,1).getDay(); return d===0?6:d-1; }
+function wallShowToast(msg) {
+  const t = document.getElementById("wf-toast"); if (!t) return;
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+function renderWallCal() {
+  const lbl = document.getElementById("wall-cal-label"); if (!lbl) return;
+  lbl.textContent = new Date(wallViewY, wallViewM, 1).toLocaleDateString("en", {month:"long", year:"numeric"});
+  const grid = document.getElementById("wall-cal-grid"); grid.innerHTML = "";
+  ["M","T","W","T","F","S","S"].forEach(d => {
+    const el = document.createElement("div"); el.className = "cal-dow"; el.textContent = d; grid.appendChild(el);
+  });
+  const first = wallFirstDow(wallViewY, wallViewM);
+  const days  = wallDaysInMonth(wallViewY, wallViewM);
+  const todayStr = new Date().toISOString().slice(0,10);
+  for (let i=0; i<first; i++) { const el=document.createElement("div"); el.className="cal-day empty"; grid.appendChild(el); }
+  for (let d=1; d<=days; d++) {
+    const ds = `${wallViewY}-${String(wallViewM+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const cnt = wallCountOnDate(ds);
+    const hClass = ["h0","h1","h2","h3","h4"][Math.min(cnt,4)];
+    const el = document.createElement("div");
+    let cls = `cal-day ${hClass}`;
+    if (ds === todayStr) cls += " today";
+    if (ds === wallSelDate) cls += " cal-selected";
+    el.className = cls;
+    const num = document.createElement("span"); num.textContent = d; el.appendChild(num);
+    if (cnt > 0) {
+      const dots = document.createElement("div"); dots.className = "cal-dots";
+      for (let i=0; i<Math.min(cnt,4); i++) { const dot=document.createElement("div"); dot.className="cal-dot"; dots.appendChild(dot); }
+      el.appendChild(dots);
+    }
+    el.onclick = () => { wallSelDate = ds; renderWallCal(); renderWallForm(); renderWallDayEntries(); };
+    grid.appendChild(el);
+  }
+}
+
+function renderWallPeople() {
+  const c = document.getElementById("wall-people-dash"); if (!c) return;
+  const CMAP = {daily:365, weekly:52, monthly:12, yearly:2};
+  let html = `<div class="eyebrow" style="margin-bottom:8px">This month</div>`;
+  // build list from state.people + "myself"
+  const wallPeople = [
+    ...state.people,
+    {name:"myself", type:"solo", age:0, exp:0, contact:"daily"}
+  ];
+  wallPeople.forEach((p, i) => {
+    const cnt    = wallCountThisMonth(p.name);
+    const st     = wallStreak(p.name);
+    const tot    = wallTotalLogged(p.name);
+    const isPet  = p.type==="cat"||p.type==="dog";
+    const isSolo = p.type==="solo";
+    const bgCol  = isPet?"transparent":isSolo?"var(--bg2)":PALETTE[i%PALETTE.length];
+    const tcCol  = isDark()?PTXT_L[i%PTXT_L.length]:PTXT_D[i%PTXT_D.length];
+    const avText = isPet?TYPE_EMOJI[p.type]:isSolo?"🧘":initials(p.name,p.type);
+    const avSize = (isPet||isSolo)?"18px":"11px";
+    const barCol = isSolo?"var(--accent)":"var(--green)";
+    const isActive = wallSelWith.includes(p.name);
+    html += `
+      <div class="wall-person-row">
+        <div class="wp-av" style="background:${bgCol};color:${tcCol};font-size:${avSize}">${avText}</div>
+        <div class="wp-info">
+          <div class="wp-name">${p.name}<span style="font-size:10px;font-weight:400;color:var(--text2);margin-left:6px">${cnt} this month${st>=2?" · 🔥 "+st:""}</span></div>
+          <div class="wp-bar-wrap"><div class="wp-bar-fill" style="width:${Math.min(100,cnt*8)}%;background:${barCol}"></div></div>
+          <div class="wp-meta">${tot} total logged</div>
+        </div>
+        <button class="wp-log-btn${isActive?" wp-active":""}" data-wname="${p.name}">${isActive?"✓ added":"+ log"}</button>
+      </div>`;
+  });
+  c.innerHTML = html;
+  c.querySelectorAll("[data-wname]").forEach(btn => {
+    btn.addEventListener("click", e => {
+      const n = e.target.dataset.wname;
+      wallSelWith = wallSelWith.includes(n) ? wallSelWith.filter(x=>x!==n) : [...wallSelWith, n];
+      renderWallPeople(); renderWallForm();
+    });
+  });
+}
+
+function renderWallForm() {
+  const todayStr = new Date().toISOString().slice(0,10);
+  const lbl = document.getElementById("wf-date-label"); if (!lbl) return;
+  lbl.textContent = wallSelDate === todayStr ? "Today — " + wallFmtDate(wallSelDate) : wallFmtDate(wallSelDate);
+  // with chips
+  const cc = document.getElementById("wf-with-chips"); cc.innerHTML = "";
+  const wallPeople = [...state.people, {name:"myself",type:"solo"}];
+  wallPeople.forEach(p => {
+    const isPet  = p.type==="cat"||p.type==="dog";
+    const isSolo = p.type==="solo";
+    const chip = document.createElement("div");
+    chip.className = "wf-chip" + (isSolo?" wf-solo":"") + (wallSelWith.includes(p.name)?" wf-on":"");
+    chip.textContent = isPet ? TYPE_EMOJI[p.type]+" "+p.name : isSolo ? "🧘 myself" : p.name;
+    chip.onclick = () => {
+      wallSelWith = wallSelWith.includes(p.name) ? wallSelWith.filter(x=>x!==p.name) : [...wallSelWith, p.name];
+      renderWallPeople(); renderWallForm();
+    };
+    cc.appendChild(chip);
+  });
+  // mood & weather
+  document.querySelectorAll("#wf-mood-btns .wf-eb").forEach(b => b.classList.toggle("wf-on", b.dataset.mood===wallSelMood));
+  document.querySelectorAll("#wf-wx-btns .wf-eb").forEach(b => b.classList.toggle("wf-on", b.dataset.wx===wallSelWx));
+  const saveBtn = document.getElementById("wf-save-btn");
+  if (saveBtn) saveBtn.disabled = wallSelWith.length === 0;
+}
+
+function renderWallDayEntries() {
+  const c = document.getElementById("wall-day-entries"); if (!c) return;
+  const dayEntries = wallEntries.filter(e => e.date === wallSelDate);
+  if (!dayEntries.length) { c.innerHTML = ""; return; }
+  const todayStr = new Date().toISOString().slice(0,10);
+  const dateLabel = wallSelDate === todayStr ? "Today" : wallFmtDate(wallSelDate);
+  let html = `<div class="day-entries-wrap">
+    <div class="day-entries-header">${dateLabel} — ${dayEntries.length} moment${dayEntries.length>1?"s":""}</div>`;
+  dayEntries.forEach(e => {
+    const tags = e.with.map(w => {
+      const isSolo = w==="myself";
+      return `<span class="de-tag${isSolo?" solo":""}">${isSolo?"🧘 myself":w}</span>`;
+    }).join("");
+    const emojis = [e.mood, e.wx].filter(Boolean).map(x=>`<span class="de-emoji">${x}</span>`).join("");
+    html += `<div class="day-entry-card">
+      <div class="de-top">${tags}${emojis}<button class="de-delete" data-eid="${e.id}">delete</button></div>
+      <div class="de-note${e.note?"":""}">${e.note || '<span class="empty">No note added</span>'}</div>
+    </div>`;
+  });
+  html += `</div>`;
+  c.innerHTML = html;
+  c.querySelectorAll("[data-eid]").forEach(btn => {
+    btn.addEventListener("click", ev => {
+      const id = parseInt(ev.target.dataset.eid);
+      wallEntries = wallEntries.filter(e => e.id !== id);
+      wallSave();
+      renderWallCal(); renderWallPeople(); renderWallDayEntries();
+    });
+  });
+}
+
+function initWallListeners() {
+  document.getElementById("wall-prev-mo").onclick = () => { wallViewM--; if(wallViewM<0){wallViewM=11;wallViewY--;} renderWallCal(); };
+  document.getElementById("wall-next-mo").onclick = () => { wallViewM++; if(wallViewM>11){wallViewM=0;wallViewY++;} renderWallCal(); };
+  document.getElementById("btn-wall-back").onclick = () => go("s-dashboard");
+
+  document.getElementById("wf-mood-btns").addEventListener("click", e => {
+    const btn = e.target.closest(".wf-eb"); if (!btn) return;
+    wallSelMood = wallSelMood===btn.dataset.mood ? "" : btn.dataset.mood;
+    renderWallForm();
+  });
+  document.getElementById("wf-wx-btns").addEventListener("click", e => {
+    const btn = e.target.closest(".wf-eb"); if (!btn) return;
+    wallSelWx = wallSelWx===btn.dataset.wx ? "" : btn.dataset.wx;
+    renderWallForm();
+  });
+
+  document.getElementById("wf-save-btn").onclick = () => {
+    if (!wallSelWith.length) return;
+    wallEntries.unshift({
+      id: Date.now(), date: wallSelDate,
+      with: [...wallSelWith], mood: wallSelMood, wx: wallSelWx,
+      note: document.getElementById("wf-note").value.trim()
+    });
+    wallSave();
+    wallSelWith = []; wallSelMood = ""; wallSelWx = "";
+    document.getElementById("wf-note").value = "";
+    renderWallCal(); renderWallPeople(); renderWallForm(); renderWallDayEntries();
+    wallShowToast("Moment saved ✓");
+  };
+}
+
+let wallListenersInited = false;
+function renderWall() {
+  renderWallCal();
+  renderWallPeople();
+  renderWallForm();
+  renderWallDayEntries();
+  if (!wallListenersInited) { initWallListeners(); wallListenersInited = true; }
+}
+
+function bindWallCTA() {
+  const btn = document.getElementById("btn-go-wall");
+  if (btn) btn.onclick = () => go("s-wall");
+}
 
 /* ---- init ---- */
 renderSplash();
