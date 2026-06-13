@@ -1,1345 +1,314 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Final Countdown</title>
-<style>
-  :root {
-    --bg: #F7F4EE;
-    --bg2: #EDE5D8;
-    --text: #2C2820;
-    --text2: #8A7A68;
-    --border: #D8CCBC;
-    --border2: #C0B49A;
-    --green: #5A9478;
-    --green-bg: #D4E8DF;
-    --green-border: #5A9478;
-    --green-dark: #2C5A46;
-    --orange: #D4852A;
-    --red-text: #A32D2D;
-    --red-border: #F09595;
-    --red-bg: #FCEBEB;
-    --past: #2C2820;
-    --accent: #D4852A;
-    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --mono: "SF Mono", "Fira Code", "Consolas", monospace;
-    --serif: Georgia, "Times New Roman", serif;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1E1A14;
-      --bg2: #2A2418;
-      --text: #F0EAE0;
-      --text2: #8A7A68;
-      --border: #3A3028;
-      --border2: #4A3E30;
-      --green-bg: #1A3828;
-      --green-border: #5A9478;
-      --past: #5A5248;
-    }
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
-  .container { max-width: 560px; margin: 0 auto; padding: 0 20px 80px; }
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { PALETTE, AVATAR_PALETTE, TYPE_LABEL, LIFE_PHASES } from '../hooks/useStore';
+import type { useStore } from '../hooks/useStore';
 
-  /* screens */
-  .screen { display: none; padding: 2rem 0; animation: fadeIn 0.75s cubic-bezier(0.4,0,0.2,1); }
-  .screen.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+const EASE_TUPLE: [number, number, number, number] = [0.25, 0.46, 0.45, 0.94];
 
-  /* typography */
-  .eyebrow { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text2); margin-bottom: 0.6rem; }
-  .screen-title { font-size: 26px; font-weight: 500; color: var(--text); line-height: 1.2; margin-bottom: 0.5rem; }
-  .serif-sub { font-size: 15px; color: var(--text2); line-height: 1.65; margin-bottom: 1.75rem; font-family: var(--serif); }
-  .divider { border: none; border-top: 0.5px solid var(--border); margin: 1.75rem 0; }
-
-  /* dots */
-  .dots { display: flex; gap: 5px; margin-bottom: 2rem; align-items: center; }
-  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2); transition: all .2s; }
-  .dot.on { width: 20px; border-radius: 3px; background: var(--text); }
-  .dot.done { background: var(--text2); }
-
-  /* inputs */
-  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 1rem; }
-  .field label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text2); }
-  input[type="number"], input[type="text"], select {
-    background: var(--bg2); border: 0.5px solid var(--border); border-radius: 6px;
-    padding: 8px 10px; font-size: 15px; color: var(--text); font-family: var(--font);
-    width: 100%; outline: none;
-  }
-  input:focus, select:focus { border-color: var(--border2); }
-  input[type="range"] { accent-color: var(--text); }
-  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-  /* buttons */
-  .btn {
-    background: var(--text); color: var(--bg); border: none; border-radius: 8px;
-    padding: 12px 24px; font-size: 14px; font-weight: 500; cursor: pointer;
-    font-family: var(--font); margin-top: 0.75rem; display: inline-block;
-  }
-  .btn:hover { opacity: 0.82; }
-  .btn-ghost {
-    background: transparent; color: var(--text2); border: none; padding: 8px 0;
-    font-size: 13px; cursor: pointer; font-family: var(--font); display: block; margin-top: 6px;
-  }
-  .btn-ghost:hover { color: var(--text); }
-  .btn-danger {
-    background: transparent; color: var(--red-text); border: 0.5px solid var(--red-border);
-    border-radius: 8px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-family: var(--font);
-  }
-  .btn-danger:hover { background: var(--red-bg); }
-  .add-type-btns { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
-  .add-type-btn {
-    flex: 1; min-width: 80px; border: 0.5px dashed var(--border2); border-radius: 8px;
-    padding: 9px 8px; background: transparent; font-size: 13px; color: var(--text2);
-    cursor: pointer; font-family: var(--font); display: flex; align-items: center;
-    justify-content: center; gap: 6px;
-  }
-  .add-type-btn:hover { background: var(--bg2); }
-
-  /* prev box */
-  .prev-box {
-    background: var(--bg2); border-radius: 10px; padding: 1rem 1.25rem;
-    margin-bottom: 1.25rem; display: flex; align-items: baseline; gap: 12px;
-  }
-  .prev-big { font-size: 40px; font-weight: 500; font-family: var(--mono); color: var(--text); line-height: 1; }
-  .prev-unit { font-size: 13px; color: var(--text2); }
-
-  /* grid */
-  .grid-wrap { line-height: 1; margin-bottom: 1.25rem; }
-  .cell {
-    display: inline-block; border-radius: 1px; margin: 1.5px; width: 8px; height: 8px;
-  }
-  .cell.past { background: var(--past); }
-  .cell.future { background: var(--green-bg); border: 0.5px solid var(--green-border); }
-  .cell.shared { background: var(--green); }
-  .cell.alone { background: var(--green-bg); border: 0.5px solid var(--green-border); opacity: 0.35; }
-
-  /* stats */
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 1.5rem; }
-  .stat { background: var(--bg2); border-radius: 8px; padding: 0.7rem 0.9rem; }
-  .stat-val { font-size: 19px; font-weight: 500; font-family: var(--mono); color: var(--text); }
-  .stat-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--text2); margin-top: 2px; }
-
-  /* tabs */
-  .tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
-  .tab {
-    padding: 4px 11px; font-size: 11px; border: 0.5px solid var(--border); border-radius: 100px;
-    cursor: pointer; background: transparent; color: var(--text2); letter-spacing: .04em; font-family: var(--font);
-  }
-  .tab.on { background: var(--text); color: var(--bg); border-color: var(--text); }
-
-  /* person cards */
-  .person-card {
-    background: var(--bg); border: 0.5px solid var(--border); border-radius: 10px;
-    padding: 0.875rem 1rem; margin-bottom: 8px;
-  }
-  .pc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-  .avatar {
-    width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center;
-    justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0;
-  }
-  .pc-name { font-size: 13px; font-weight: 500; color: var(--text); }
-  .pc-inputs { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 8px; align-items: end; }
-  .pc-inputs .field { margin-bottom: 0; }
-  .pc-inputs .field label { font-size: 10px; }
-  .pc-inputs input, .pc-inputs select { font-size: 13px; }
-  .rm {
-    width: 26px; height: 26px; border: 0.5px solid var(--border); border-radius: 6px;
-    background: transparent; cursor: pointer; color: var(--text2); font-size: 15px;
-    display: flex; align-items: center; justify-content: center; margin-bottom: 1px; padding: 0;
-  }
-  .rm:hover { background: var(--bg2); }
-
-  /* pnav */
-  .pnav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.5rem; }
-  .pnav-btn {
-    display: flex; align-items: center; gap: 7px; padding: 6px 12px;
-    border: 0.5px solid var(--border); border-radius: 100px; cursor: pointer;
-    background: transparent; font-family: var(--font); font-size: 12px; color: var(--text2);
-  }
-  .pnav-btn.on { border-color: var(--text); color: var(--text); background: var(--bg2); }
-  .pnav-add { border-style: dashed; font-size: 11px; }
-  .pnav-av { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; }
-
-  /* audit */
-  .audit-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid var(--border); }
-  .audit-row:last-child { border-bottom: none; }
-  .audit-lbl { font-size: 13px; color: var(--text); width: 108px; flex-shrink: 0; }
-  .audit-lbl span { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--text2); margin-top: 1px; }
-  .audit-val { font-size: 13px; font-weight: 500; font-family: var(--mono); min-width: 26px; text-align: right; color: var(--text); }
-
-  /* donut chart */
-  .donut-wrap { display: flex; align-items: center; gap: 24px; margin-bottom: 1.5rem; flex-wrap: wrap; }
-  .donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 140px; }
-  .donut-legend-row { display: flex; align-items: center; gap: 8px; }
-  .donut-legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
-  .donut-legend-lbl { font-size: 12px; color: var(--text2); flex: 1; }
-  .donut-legend-pct { font-size: 12px; font-weight: 500; font-family: var(--mono); color: var(--text); }
-
-  /* verdict */
-  .verdict-line {
-    font-size: 16px; color: var(--text2); line-height: 1.7; font-family: var(--serif);
-    padding: 0.75rem 0; border-bottom: 0.5px solid var(--border);
-  }
-  .verdict-line:last-child { border-bottom: none; }
-  .verdict-line strong { color: var(--text); font-weight: 500; font-size: 17px; }
-  .verdict-line.punch { font-size: 18px; color: var(--text); font-weight: 500; padding-top: 1rem; }
-  .verdict-line.punch strong { font-size: 20px; }
-
-  /* what-if */
-  .whatif { background: var(--bg2); border-radius: 12px; padding: 1.25rem 1.5rem; }
-  .whatif-title { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--text2); margin-bottom: 1rem; }
-  .whatif-slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem; flex-wrap: wrap; }
-  .whatif-slider-row label { font-size: 13px; color: var(--text); white-space: nowrap; }
-  .whatif-val { font-size: 13px; font-weight: 500; font-family: var(--mono); color: var(--text); min-width: 26px; text-align: right; }
-  .wi-cards { display: flex; gap: 10px; flex-wrap: wrap; }
-  .wi-card { flex: 1; min-width: 100px; background: var(--bg); border-radius: 8px; padding: 0.75rem 1rem; border: 0.5px solid var(--border); }
-  .wi-val { font-size: 20px; font-weight: 500; font-family: var(--mono); line-height: 1; }
-  .wi-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--text2); margin-top: 4px; }
-  .wi-delta { font-size: 12px; margin-top: 6px; font-family: var(--mono); }
-
-  /* person detail */
-  .enc-block { border: 0.5px solid var(--border); border-radius: 10px; padding: 1.1rem; margin-bottom: 1rem; }
-  .enc-bar-wrap { height: 5px; background: var(--bg2); border-radius: 3px; overflow: hidden; margin: 10px 0 6px; }
-  .enc-bar { height: 100%; border-radius: 3px; }
-  .verdict-block { padding: 1.1rem; border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; }
-  .verdict-block p { font-size: 14px; color: var(--text2); line-height: 1.8; font-family: var(--serif); }
-  .verdict-block strong { color: var(--text); font-weight: 500; }
-  .tl-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
-  .tl-lbl { font-size: 11px; color: var(--text2); width: 48px; text-align: right; flex-shrink: 0; }
-  .tl-outer { flex: 1; height: 14px; background: var(--bg2); border-radius: 2px; overflow: hidden; position: relative; }
-  .tl-seg { height: 100%; position: absolute; top: 0; border-radius: 2px; }
-  .tl-age { font-size: 10px; font-family: var(--mono); color: var(--text2); min-width: 24px; }
-  .legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
-  .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
-  .leg-dot { width: 8px; height: 8px; border-radius: 1px; display: inline-block; flex-shrink: 0; }
-
-  /* topbar */
-  .dash-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; }
-  .back-link { font-size: 12px; color: var(--text2); background: transparent; border: none; cursor: pointer; font-family: var(--font); padding: 0; }
-  .back-link:hover { color: var(--text); }
-  .saved-badge { font-size: 11px; color: var(--text2); opacity: 0; transition: opacity .4s; margin-left: 8px; }
-  .saved-badge.show { opacity: 1; }
-
-  /* profile card */
-  .profile-card {
-    background: var(--bg2); border-radius: 12px; padding: 12px 16px;
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; margin-bottom: 1.75rem; flex-wrap: wrap;
-  }
-  .profile-left { display: flex; align-items: center; gap: 12px; }
-  .profile-avatar {
-    width: 40px; height: 40px; border-radius: 50%; background: var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: 500; font-family: var(--mono);
-    color: #FAF0E0; flex-shrink: 0;
-  }
-  .profile-name { font-size: 14px; font-weight: 500; color: var(--text); }
-  .profile-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
-  .profile-actions { display: flex; gap: 8px; }
-  .profile-btn {
-    font-size: 12px; color: var(--text2); background: var(--bg);
-    border: 0.5px solid var(--border); border-radius: 8px;
-    padding: 6px 12px; cursor: pointer; font-family: var(--font);
-    display: flex; align-items: center; gap: 5px; white-space: nowrap;
-  }
-  .profile-btn:hover { color: var(--text); background: var(--bg2); border-color: var(--border2); }
-
-  /* splash */
-  .returning-banner {
-    background: var(--bg2); border-radius: 10px; padding: 1rem 1.25rem;
-    margin-bottom: 1.25rem; display: flex; justify-content: space-between;
-    align-items: center; gap: 12px; flex-wrap: wrap;
-  }
-  .rb-btn {
-    background: var(--text); color: var(--bg); border: none; border-radius: 6px;
-    padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font);
-  }
-  .rb-btn:hover { opacity: .82; }
-
-  /* ── MINDFUL WALL ── */
-  .wall-transition { padding: 1.5rem 0 0.5rem; text-align: center; }
-  .wall-transition-line { font-size: 13px; color: var(--text2); font-family: var(--serif); font-style: italic; margin-bottom: 0.5rem; }
-  .wall-transition-rule { border: none; border-top: 0.5px solid var(--border); margin: 1rem 0 1.75rem; }
-
-  .cal-card { background: var(--bg2); border-radius: 14px; padding: 14px; margin-bottom: 1rem; }
-  .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .cal-month-label { font-size: 14px; font-weight: 500; color: var(--text); }
-  .cal-nav { background: none; border: none; font-size: 22px; color: var(--text2); cursor: pointer; padding: 0 8px; line-height: 1; font-family: var(--font); }
-  .cal-nav:hover { color: var(--text); }
-  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
-  .cal-dow { font-size: 9px; text-align: center; color: var(--text2); padding-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; opacity: .7; }
-  .cal-day {
-    aspect-ratio: 1; border-radius: 7px; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; font-size: 11px;
-    cursor: pointer; transition: all .15s; border: 1.5px solid transparent;
-    gap: 2px; color: var(--text2);
-  }
-  .cal-day.empty { cursor: default; pointer-events: none; }
-  .cal-day:not(.empty):hover { filter: brightness(.93); }
-  .cal-day.today { outline: 2px solid var(--text); outline-offset: 1px; }
-  .cal-day.cal-selected { border: 2px solid var(--text) !important; }
-  .cal-day.h0 { background: var(--bg2); color: var(--text2); }
-  .cal-day.h1 { background: #F5C9A0; color: #6B3A10; }
-  .cal-day.h2 { background: #E8984A; color: #FAF0E0; }
-  .cal-day.h3 { background: #D4852A; color: #FAF0E0; font-weight: 500; }
-  .cal-day.h4 { background: #B86820; color: #FAF0E0; font-weight: 600; }
-  .cal-dots { display: flex; gap: 2px; justify-content: center; margin-top: 2px; }
-  .cal-dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .6; }
-  .cal-legend { display: flex; align-items: center; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
-  .cal-leg-swatch { width: 11px; height: 11px; border-radius: 3px; flex-shrink: 0; }
-  .cal-leg-label { font-size: 10px; color: var(--text2); }
-
-  .wall-people { background: var(--bg); border: 0.5px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 1rem; }
-  .wall-person-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
-  .wall-person-row:last-child { border-bottom: none; }
-  .wp-av { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; }
-  .wp-info { flex: 1; min-width: 0; }
-  .wp-name { font-size: 13px; font-weight: 500; color: var(--text); }
-  .wp-meta { font-size: 10px; color: var(--text2); margin-top: 1px; }
-  .wp-bar-wrap { height: 3px; background: var(--bg2); border-radius: 2px; margin-top: 4px; overflow: hidden; }
-  .wp-bar-fill { height: 100%; border-radius: 2px; transition: width .4s; }
-  .wp-log-btn {
-    font-size: 11px; color: var(--accent); background: #F5E8D5;
-    border: 0.5px solid #E8C898; border-radius: 6px; padding: 5px 10px;
-    cursor: pointer; white-space: nowrap; flex-shrink: 0; font-family: var(--font);
-    transition: all .15s;
-  }
-  .wp-log-btn:hover { background: #EDD4A8; }
-  .wp-log-btn.wp-active { background: var(--accent); color: #FAF0E0; border-color: var(--accent); }
-
-  .wall-form { background: var(--bg); border: 0.5px solid var(--border); border-radius: 14px; padding: 14px; }
-  .wf-date-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
-  .wf-date-label { font-size: 13px; font-weight: 500; color: var(--text); }
-  #wf-date-input { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
-  .wf-change-btn {
-    font-size: 11px; color: var(--text2); background: var(--bg2);
-    border: 0.5px solid var(--border); border-radius: 6px; padding: 5px 10px;
-    cursor: pointer; font-family: var(--font); transition: all .15s;
-  }
-  .wf-change-btn:hover { border-color: var(--border2); color: var(--text); }
-  .wf-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
-  .wf-row:last-child { margin-bottom: 0; }
-  .wf-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--text2); width: 56px; flex-shrink: 0; padding-top: 9px; }
-  .wf-content { flex: 1; }
-  .wf-chips { display: flex; gap: 6px; flex-wrap: wrap; }
-  .wf-chip {
-    padding: 5px 11px; border-radius: 100px; border: 0.5px solid var(--border);
-    background: var(--bg2); font-size: 12px; color: var(--text2); cursor: pointer; transition: all .15s;
-  }
-  .wf-chip:hover { border-color: var(--border2); }
-  .wf-chip.wf-on { border-color: var(--green); background: var(--green-bg); color: var(--green-dark); }
-  .wf-chip.wf-solo.wf-on { border-color: var(--accent); background: #F5E8D5; color: #8A4E10; }
-  .wf-emoji-row { display: flex; gap: 6px; flex-wrap: wrap; }
-  .wf-eb {
-    width: 36px; height: 36px; border-radius: 9px; border: 0.5px solid var(--border);
-    background: var(--bg2); cursor: pointer; font-size: 17px; display: flex;
-    align-items: center; justify-content: center; transition: all .15s;
-  }
-  .wf-eb:hover { border-color: var(--border2); background: var(--bg); }
-  .wf-eb.wf-on { border-color: var(--accent); background: #F5E8D5; }
-  .wf-textarea {
-    width: 100%; border: 0.5px solid var(--border); border-radius: 9px;
-    padding: 9px 11px; font-size: 13px; font-family: var(--serif);
-    color: var(--text); background: var(--bg2); resize: none; outline: none; line-height: 1.6;
-  }
-  .wf-textarea:focus { border-color: var(--border2); }
-  .wf-save {
-    background: var(--text); color: var(--bg); border: none; border-radius: 9px;
-    padding: 11px; font-size: 13px; font-weight: 500; cursor: pointer;
-    font-family: var(--font); width: 100%; margin-top: 10px; transition: opacity .15s;
-  }
-  .wf-save:hover { opacity: .85; }
-  .wf-save:disabled { opacity: .35; cursor: default; }
-  .wf-toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background: var(--text); color: var(--bg); padding: 10px 20px; border-radius: 100px;
-    font-size: 13px; opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap; z-index: 100;
-  }
-  .wf-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-  /* wall CTA button */
-  .wall-cta-btn {
-    width: 100%; margin-top: 1.5rem; padding: 18px 20px;
-    background: var(--bg2); border: 0.5px solid var(--border2);
-    border-radius: 14px; cursor: pointer; font-family: var(--font);
-    text-align: left; transition: all .2s; display: block;
-  }
-  .wall-cta-btn:hover { background: var(--bg3,#DDD0C0); border-color: var(--accent); }
-  .wall-cta-title { display: block; font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
-  .wall-cta-sub { display: block; font-size: 13px; color: var(--text2); font-family: var(--serif); font-style: italic; }
-
-  /* day entries review */
-  .day-entries-wrap { margin-bottom: 1rem; }
-  .day-entries-header { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
-  .day-entry-card {
-    background: var(--bg); border: 0.5px solid var(--border);
-    border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
-  }
-  .de-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
-  .de-tag { font-size: 11px; padding: 3px 8px; border-radius: 100px; background: var(--green-bg); color: var(--green-dark); border: 0.5px solid var(--green); }
-  .de-tag.solo { background: #F5E8D5; color: #8A4E10; border-color: var(--accent); }
-  .de-emoji { font-size: 15px; }
-  .de-note { font-size: 13px; color: var(--text2); font-family: var(--serif); line-height: 1.6; }
-  .de-note.empty { font-style: italic; opacity: .55; }
-  .de-delete { margin-left: auto; font-size: 11px; color: var(--text2); background: none; border: 0.5px solid var(--border); cursor: pointer; font-family: var(--font); padding: 3px 8px; border-radius: 5px; flex-shrink: 0; }
-  .de-delete:hover { color: var(--red-text); border-color: var(--red-border); background: var(--red-bg); }
-</style>
-</head>
-<body>
-<div class="container">
-
-<!-- SPLASH -->
-<div class="screen active" id="s-splash">
-  <div style="min-height:90vh;display:flex;flex-direction:column;justify-content:center">
-    <div class="eyebrow" style="margin-bottom:1.5rem">The Final Countdown</div>
-    <h1 style="font-size:38px;font-weight:500;color:var(--text);line-height:1.15;margin-bottom:1rem;max-width:380px">Your life,<br>in squares.</h1>
-    <p style="font-size:16px;color:var(--text2);line-height:1.7;max-width:400px;font-family:var(--serif);margin-bottom:2.5rem">Each square is one week. The gray ones are already gone.<br>This takes two minutes. It will bother you — usefully.</p>
-    <div id="splash-actions"></div>
-  </div>
-</div>
-
-<!-- STEP 1: YOU -->
-<div class="screen" id="s-you">
-  <div class="dots" id="dots-you"></div>
-  <div class="screen-title">First, some numbers.</div>
-  <p class="serif-sub">Your age and a life expectancy model. Everything else is derived from these two.</p>
-  <div class="two">
-    <div class="field"><label>Your age</label><input type="number" id="my-age" min="1" max="99" value="35"></div>
-    <div class="field"><label>Model</label>
-      <select id="my-exp">
-        <option value="73">Global avg (73)</option>
-        <option value="79">Moderate health (79)</option>
-        <option value="83" selected>Good health (83)</option>
-        <option value="87">Very healthy (87)</option>
-        <option value="93">Exceptional (93)</option>
-      </select>
-    </div>
-  </div>
-  <div class="prev-box"><div class="prev-big" id="prev-wks">--</div><div class="prev-unit">weeks remaining</div></div>
-  <div class="grid-wrap" id="prev-grid"></div>
-  <button class="btn" id="btn-you-next">Continue</button>
-</div>
-
-<!-- STEP 2: PEOPLE -->
-<div class="screen" id="s-people">
-  <div class="dots" id="dots-people"></div>
-  <div class="screen-title">Who matters most?</div>
-  <p class="serif-sub">Add the people and animals whose time overlaps with yours.</p>
-  <div id="ob-people-list"></div>
-  <div class="add-type-btns">
-    <button class="add-type-btn" data-add="person">+ Person</button>
-    <button class="add-type-btn" data-add="dog">+ Dog</button>
-    <button class="add-type-btn" data-add="cat">+ Cat</button>
-  </div>
-  <button class="btn" id="btn-people-next">Continue</button>
-  <button class="btn-ghost" id="btn-people-skip">Skip for now</button>
-</div>
-
-<!-- STEP 3: AUDIT -->
-<div class="screen" id="s-audit">
-  <div class="dots" id="dots-audit"></div>
-  <div class="screen-title">Where does the time go?</div>
-  <p class="serif-sub">Hours per day. This is the part that stings.</p>
-  <div id="ob-audit-rows"></div>
-  <button class="btn" id="btn-audit-next">Show me</button>
-</div>
-
-<!-- DASHBOARD -->
-<div class="screen" id="s-dashboard">
-  <div class="dots" id="dots-dashboard"></div>
-  <div id="dash-profile-card"></div>
-
-  <!-- Life grid -->
-  <div class="eyebrow">Your life</div>
-  <div class="prev-box" style="margin-bottom:1rem">
-    <div class="prev-big" id="dash-wks">--</div>
-    <div class="prev-unit" id="dash-unit">weeks remaining</div>
-  </div>
-  <div class="tabs" id="dash-tabs">
-    <button class="tab on" data-u="weeks">Weeks</button>
-    <button class="tab" data-u="months">Months</button>
-    <button class="tab" data-u="years">Years</button>
-  </div>
-  <div class="grid-wrap" id="dash-grid"></div>
-  <div id="dash-grid-legend" style="margin-bottom:0.75rem;display:flex;flex-wrap:wrap"></div>
-  <div class="stats-grid" id="dash-stats"></div>
-
-  <hr class="divider">
-
-  <!-- People -->
-  <div class="eyebrow">Your people</div>
-  <div class="pnav" id="dash-pnav"></div>
-  <div id="dash-person-detail"></div>
-
-  <hr class="divider">
-
-  <!-- Time audit: donut + what-if only -->
-  <div class="eyebrow">How your remaining life is distributed</div>
-  <div id="dash-burndown" style="margin-bottom:1.5rem"></div>
-  <div id="dash-verdict" style="margin-bottom:2rem"></div>
-
-  <div class="whatif">
-    <div class="whatif-title">What if you spent less time on your phone?</div>
-    <div class="whatif-slider-row">
-      <label>Screen time</label>
-      <input type="range" id="wi-slider" min="0" max="8" step="0.5" value="4" style="flex:1;min-width:80px">
-      <span class="whatif-val" id="wi-hpd">4h</span>
-      <span style="font-size:11px;color:var(--text2)">/day</span>
-    </div>
-    <div class="wi-cards" id="wi-result"></div>
-  </div>
-
-  <!-- transition to wall -->
-  <div class="wall-transition">
-    <p class="wall-transition-line">The numbers show what's at stake.</p>
-    <button class="wall-cta-btn" id="btn-go-wall">
-      <span class="wall-cta-title">Record a mindful moment</span>
-      <span class="wall-cta-sub">Make quality time count — tap to open your moments wall</span>
-    </button>
-  </div>
-
-</div>
-
-<!-- MINDFUL WALL -->
-<div class="screen" id="s-wall">
-  <div class="dots" id="dots-wall"></div>
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.75rem">
-    <button class="back-link" id="btn-wall-back">← back</button>
-  </div>
-  <div class="eyebrow">Mindful moments</div>
-
-  <div class="cal-card">
-    <div class="cal-header">
-      <button class="cal-nav" id="wall-prev-mo">‹</button>
-      <span class="cal-month-label" id="wall-cal-label"></span>
-      <button class="cal-nav" id="wall-next-mo">›</button>
-    </div>
-    <div class="cal-grid" id="wall-cal-grid"></div>
-    <div class="cal-legend" style="margin-top:10px">
-      <div class="cal-leg-swatch" style="background:var(--bg2);border:0.5px solid var(--border)"></div>
-      <div class="cal-leg-swatch" style="background:#F5C9A0"></div>
-      <div class="cal-leg-swatch" style="background:#E8984A"></div>
-      <div class="cal-leg-swatch" style="background:#D4852A"></div>
-      <div class="cal-leg-swatch" style="background:#B86820"></div>
-      <span class="cal-leg-label">0 → 4+ moments</span>
-    </div>
-    <p style="font-size:11px;color:var(--text2);margin-top:10px;font-style:italic">Tap a day on the calendar to select a date</p>
-  </div>
-
-  <!-- entries for selected day -->
-  <div id="wall-day-entries"></div>
-
-  <div class="wall-people" id="wall-people-dash"></div>
-
-  <div class="wall-form">
-    <div class="wf-date-row">
-      <span class="wf-date-label" id="wf-date-label">Today</span>
-      <input type="date" id="wf-date-input" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px">
-    </div>
-    <div class="wf-row">
-      <div class="wf-lbl">With</div>
-      <div class="wf-content"><div class="wf-chips" id="wf-with-chips"></div></div>
-    </div>
-    <div class="wf-row">
-      <div class="wf-lbl">Mood</div>
-      <div class="wf-content">
-        <div class="wf-emoji-row" id="wf-mood-btns">
-          <button class="wf-eb" data-mood="😔">😔</button>
-          <button class="wf-eb" data-mood="😐">😐</button>
-          <button class="wf-eb" data-mood="🙂">🙂</button>
-          <button class="wf-eb" data-mood="😊">😊</button>
-          <button class="wf-eb" data-mood="🥰">🥰</button>
-        </div>
-      </div>
-    </div>
-    <div class="wf-row">
-      <div class="wf-lbl">Weather</div>
-      <div class="wf-content">
-        <div class="wf-emoji-row" id="wf-wx-btns">
-          <button class="wf-eb" data-wx="☀️">☀️</button>
-          <button class="wf-eb" data-wx="⛅">⛅</button>
-          <button class="wf-eb" data-wx="🌧">🌧</button>
-          <button class="wf-eb" data-wx="❄️">❄️</button>
-        </div>
-      </div>
-    </div>
-    <div class="wf-row">
-      <div class="wf-lbl">Note</div>
-      <div class="wf-content">
-        <textarea class="wf-textarea" id="wf-note" rows="3" placeholder="What happened? A few words is enough."></textarea>
-      </div>
-    </div>
-    <button class="wf-save" id="wf-save-btn" disabled>Save moment</button>
-  </div>
-
-</div>
-
-<div class="wf-toast" id="wf-toast"></div>
-
-</div><!-- /container -->
-
-<script>
-const STORE_KEY = "tfc_v3";
-const PALETTE = ["#5A9478","#D4852A","#B85C7A","#6B8FAE","#8A7A5A","#7A5A8A"];
-const PTXT_D  = ["#1A3828","#4A2C08","#4A1828","#1C3448","#2C2818","#2C1840"];
-const PTXT_L  = ["#D4E8DF","#F5DFC0","#F4D0DC","#D0DFF0","#E0D8C8","#DDD0F0"];
-const TYPE_EXP   = {person:83, dog:13, cat:16};
-const TYPE_EMOJI = {person:"👤", dog:"🐕", cat:"🐈"};
-const TYPE_LABEL = {person:"person", dog:"dog", cat:"cat"};
-
-const DEFAULT_STATE = {
-  age: 35, exp: 83,
-  people: [
-    {name:"Mom",  age:65, exp:85, contact:"weekly", type:"person"},
-    {name:"Dad",  age:68, exp:80, contact:"weekly", type:"person"},
-    {name:"Micio",age:4,  exp:16, contact:"daily",  type:"cat"},
-  ],
-  audit: [
-    {label:"Sleep",       sub:"recovery",     hpd:7,   min:4,  max:12,  step:0.5},
-    {label:"Screen time", sub:"phone/social", hpd:4,   min:0,  max:8,   step:0.5},
-    {label:"Work",        sub:"paid hours",   hpd:8,   min:0,  max:16,  step:0.5},
-    {label:"Commute",     sub:"transit/drive",hpd:1,   min:0,  max:4,   step:0.25},
-  ]
-};
-
-let state = loadState();
-let dashUnit = "weeks";
-let personUnit = "weeks";
-let activeP = 0;
-let saveTimer = null;
-
-/* ---- storage ---- */
-function loadState() {
-  try { const r = localStorage.getItem(STORE_KEY); if (r) return JSON.parse(r); } catch(e) {}
-  return JSON.parse(JSON.stringify(DEFAULT_STATE));
-}
-function saveState() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); showSaved(); } catch(e) {}
-}
-function scheduleSave() {
-  if (saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveState, 600);
-}
-function showSaved() {
-  const b = document.getElementById("saved-badge");
-  if (!b) return;
-  b.classList.add("show");
-  setTimeout(() => b.classList.remove("show"), 2000);
+function AnimatedNumber({ value, duration = 800 }: { value: number; duration?: number }) {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    let raf: number;
+    const start = display;
+    const diff = value - start;
+    const startTime = performance.now();
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(start + diff * eased));
+      if (progress < 1) raf = requestAnimationFrame(animate);
+    };
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return <>{display.toLocaleString()}</>;
 }
 
-/* ---- helpers ---- */
-function isDark() { return window.matchMedia && window.matchMedia("(prefers-color-scheme:dark)").matches; }
-function initials(n, type) {
-  // kept for legacy calls but we use avatarCircle everywhere now
-  return "";
-}
-// Unified avatar: plain colored circle, no text, no emoji
-const AVATAR_PALETTE = ["#7EB8A4","#C4956A","#B07AAC","#7A9EC4","#A4B87A","#C47A7A","#7AAAB8","#C4A87A"];
-function avatarBg(index, type) {
-  if (type === "solo") return "#B0A090";
+function avatarBg(index: number, type: string) {
+  if (type === 'solo') return '#9A9088';
   return AVATAR_PALETTE[index % AVATAR_PALETTE.length];
 }
-function avatarCircle(index, type, size="30px", fontSize="13px") {
-  const bg = avatarBg(index, type);
-  // subtle inner ring for pets
-  const extra = (type==="cat"||type==="dog") ? `box-shadow:inset 0 0 0 2px rgba(0,0,0,0.12);` : "";
-  return `<div style="width:${size};height:${size};border-radius:50%;background:${bg};flex-shrink:0;${extra}"></div>`;
-}
-function yrs(h) { return (h / 8760).toFixed(1); }
-function hoursLeft() { return (state.exp - state.age) * 365 * 24; }
 
-/* ---- dots ---- */
-function setDots(step) {
-  ["you","people","audit","dashboard","wall"].forEach((id) => {
-    const el = document.getElementById("dots-" + id);
-    if (!el) return;
-    let h = "";
-    for (let j = 1; j <= 5; j++) {
-      if (j < step) h += `<div class="dot done"></div>`;
-      else if (j === step) h += `<div class="dot on"></div>`;
-      else h += `<div class="dot"></div>`;
-    }
-    el.innerHTML = h;
-  });
-}
-
-/* ---- navigation ---- */
-function go(sid) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById(sid).classList.add("active");
-  const sm = {"s-you":1,"s-people":2,"s-audit":3,"s-dashboard":4,"s-wall":5};
-  if (sm[sid]) setDots(sm[sid]);
-  if (sid === "s-you")       { syncInputs(); updateYouPreview(); }
-  if (sid === "s-people")    renderObPeople();
-  if (sid === "s-audit")     renderObAudit();
-  if (sid === "s-dashboard") { renderProfileCard(); renderDashGrid(); renderDashPnav(); renderPersonDetail(); renderBurndown(); renderWhatIf(); bindWallCTA(); }
-  if (sid === "s-wall")      { renderWall(); }
-  window.scrollTo(0,0);
-}
-
-/* ---- splash ---- */
-function renderSplash() {
-  const el = document.getElementById("splash-actions");
-  if (!el) return;
-  const hasData = !!localStorage.getItem(STORE_KEY);
-  if (hasData) {
-    const s = loadState();
-    const wl = Math.max(0, (s.exp - s.age) * 52);
-    el.innerHTML = `
-      <div class="returning-banner">
-        <div>
-          <div style="font-size:14px;color:var(--text)">Welcome back. <strong>${wl.toLocaleString()} weeks</strong> remaining.</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">Your data is saved on this device.</div>
-        </div>
-        <button class="rb-btn" id="btn-resume">Continue ↗</button>
-      </div>
-      <button class="btn-ghost" id="btn-fresh">Start over</button>`;
-    document.getElementById("btn-resume").onclick = () => { state = loadState(); syncInputs(); go("s-dashboard"); };
-    document.getElementById("btn-fresh").onclick  = () => { localStorage.removeItem(STORE_KEY); state = JSON.parse(JSON.stringify(DEFAULT_STATE)); go("s-you"); };
-  } else {
-    el.innerHTML = `<button class="btn" id="btn-start">Let's start</button>`;
-    document.getElementById("btn-start").onclick = () => go("s-you");
-  }
-}
-
-/* ---- step 1 ---- */
-function syncInputs() {
-  const a = document.getElementById("my-age"), e = document.getElementById("my-exp");
-  if (a) a.value = state.age;
-  if (e) e.value = state.exp;
-}
-function updateYouPreview() {
+/* ─── Hero ─── */
+function HeroSection({ store }: { store: ReturnType<typeof useStore> }) {
+  const { state, dashUnit, setDashUnit, hoursLeft } = store;
   const age = state.age, exp = state.exp;
-  const wl = Math.max(0, (exp - age) * 52);
-  const el = document.getElementById("prev-wks");
-  if (el) el.textContent = wl.toLocaleString();
-  const g = document.getElementById("prev-grid");
-  if (!g) return;
-  let h = "";
-  for (let i = 0; i < exp * 52; i++)
-    h += `<span class="cell ${i < age*52 ? "past" : "future"}"></span>`;
-  g.innerHTML = h;
-}
-document.getElementById("my-age").addEventListener("input", e => { state.age = parseInt(e.target.value)||35; updateYouPreview(); scheduleSave(); });
-document.getElementById("my-exp").addEventListener("change", e => { state.exp = parseInt(e.target.value)||83; updateYouPreview(); scheduleSave(); });
-document.getElementById("btn-you-next").onclick = () => go("s-people");
+  let left: number, unit: string;
+  if (dashUnit === 'weeks') { left = Math.round(Math.max(0, (exp - age) * 52)); unit = 'weeks remaining'; }
+  else if (dashUnit === 'months') { left = Math.round(Math.max(0, (exp - age) * 12)); unit = 'months remaining'; }
+  else { left = Math.round(Math.max(0, exp - age)); unit = 'years remaining'; }
+  const pct = Math.round((age / exp) * 100);
+  const hrs = hoursLeft();
 
-/* ---- step 2 ---- */
-function renderObPeople() {
-  const c = document.getElementById("ob-people-list"); c.innerHTML = "";
-  state.people.forEach((p, i) => {
-    const bg = PALETTE[i % PALETTE.length];
-    const tc = isDark() ? PTXT_L[i%PTXT_L.length] : PTXT_D[i%PTXT_D.length];
-    const d = document.createElement("div"); d.className = "person-card";
-    d.innerHTML = `
-      <div class="pc-head">
-        ${avatarCircle(i, p.type, "28px")}
-        <div class="pc-name">${p.name || TYPE_LABEL[p.type]} <span style="font-size:11px;color:var(--text2);font-weight:400">${TYPE_LABEL[p.type]}</span></div>
+  return (
+    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE_TUPLE }} className="mb-16">
+      <div className="text-[10px] uppercase tracking-[0.14em] mb-4" style={{ color: 'var(--text-secondary)' }}>Time remaining</div>
+      <motion.div className="text-[clamp(56px,14vw,88px)] font-light leading-[1] tracking-[-0.03em] tabular-nums mb-2" style={{ color: 'var(--text-primary)' }} key={dashUnit + left} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <AnimatedNumber value={left} />
+      </motion.div>
+      <div className="text-[12px] uppercase tracking-[0.08em] mb-5" style={{ color: 'var(--text-secondary)' }}>{unit}</div>
+      <div className="flex gap-5 mb-6">
+        {(['weeks', 'months', 'years'] as const).map(u => (
+          <motion.button key={u} className={`text-[11px] uppercase tracking-[0.08em] pb-1 border-b transition-colors ${dashUnit === u ? 'border-[var(--text-primary)]' : 'border-transparent'}`} style={dashUnit === u ? { color: 'var(--text-primary)' } : { color: 'var(--text-tertiary)' }} onClick={() => setDashUnit(u)} whileHover={{ y: -1 }}>
+            {u}
+          </motion.button>
+        ))}
       </div>
-      <div class="pc-inputs">
-        <div class="field"><label>Name</label><input type="text" value="${p.name}" data-i="${i}" data-f="name"></div>
-        <div class="field"><label>Age</label><input type="number" min="0" max="120" value="${p.age}" data-i="${i}" data-f="age" style="width:100%"></div>
-        <div class="field"><label>Exp.</label><input type="number" min="1" max="120" value="${p.exp}" data-i="${i}" data-f="exp" style="width:100%"></div>
-        <div class="field"><label>Contact</label>
-          <select data-i="${i}" data-f="contact">
-            <option value="daily"${p.contact==="daily"?" selected":""}>Daily</option>
-            <option value="weekly"${p.contact==="weekly"?" selected":""}>Weekly</option>
-            <option value="monthly"${p.contact==="monthly"?" selected":""}>Monthly</option>
-            <option value="yearly"${p.contact==="yearly"?" selected":""}>Yearly</option>
-          </select></div>
-        <button class="rm" data-rm="${i}">×</button>
-      </div>`;
-    c.appendChild(d);
-  });
-  c.querySelectorAll("[data-i]").forEach(el => {
-    el.addEventListener("change", e => {
-      const i = parseInt(e.target.dataset.i), f = e.target.dataset.f;
-      if (f==="age") state.people[i].age = parseInt(e.target.value)||0;
-      else if (f==="exp") state.people[i].exp = parseInt(e.target.value)||1;
-      else if (f==="name") { state.people[i].name = e.target.value; renderObPeople(); }
-      else if (f==="contact") state.people[i].contact = e.target.value;
-      scheduleSave();
-    });
-  });
-  c.querySelectorAll("[data-rm]").forEach(b => {
-    b.addEventListener("click", e => {
-      state.people.splice(parseInt(e.target.dataset.rm), 1);
-      scheduleSave(); renderObPeople();
-    });
-  });
-}
-function addPerson(type, fromDash) {
-  state.people.push({name:"", age:2, exp:TYPE_EXP[type]||83, contact:type==="person"?"weekly":"daily", type});
-  scheduleSave();
-  if (fromDash) { activeP = state.people.length-1; renderDashPnav(); renderPersonDetail(); }
-  else { renderObPeople(); setTimeout(() => { const ins = document.querySelectorAll("#ob-people-list input[data-f='name']"); if (ins.length) ins[ins.length-1].focus(); }, 50); }
-}
-document.querySelectorAll("[data-add]").forEach(btn => btn.onclick = () => addPerson(btn.dataset.add));
-document.getElementById("btn-people-next").onclick = () => go("s-audit");
-document.getElementById("btn-people-skip").onclick = () => go("s-audit");
-
-/* ---- step 3 ---- */
-function fmtHpd(v) {
-  if (v === Math.floor(v)) return v + "h";
-  const h = Math.floor(v);
-  const m = Math.round((v - h) * 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
-}
-function renderObAudit() {
-  const c = document.getElementById("ob-audit-rows"); c.innerHTML = "";
-  state.audit.forEach((a, i) => {
-    const r = document.createElement("div"); r.className = "audit-row";
-    r.innerHTML = `
-      <div class="audit-lbl">${a.label}<span>${a.sub}</span></div>
-      <input type="range" style="flex:1" min="${a.min??0}" max="${a.max??16}" step="${a.step??1}" value="${a.hpd}" data-ai="${i}">
-      <span class="audit-val" id="oar-${i}">${fmtHpd(a.hpd)}</span>`;
-    c.appendChild(r);
-  });
-  c.querySelectorAll("[data-ai]").forEach(sl => {
-    sl.addEventListener("input", e => {
-      const i = parseInt(e.target.dataset.ai);
-      state.audit[i].hpd = parseFloat(e.target.value);
-      document.getElementById("oar-"+i).textContent = fmtHpd(state.audit[i].hpd);
-      scheduleSave();
-    });
-  });
-}
-document.getElementById("btn-audit-next").onclick = () => go("s-dashboard");
-
-/* ---- dashboard: life grid ---- */
-function renderDashGrid() {
-  const age = state.age, exp = state.exp;
-  let total, lived;
-  if (dashUnit==="weeks")  { total=exp*52;  lived=age*52;  }
-  else if (dashUnit==="months") { total=exp*12;  lived=age*12;  }
-  else                     { total=exp;     lived=age;     }
-  const sz = dashUnit==="years"?16:dashUnit==="months"?10:8;
-  let h = "";
-  for (let i = 0; i < total; i++)
-    h += `<span class="cell ${i<lived?"past":"future"}" style="width:${sz}px;height:${sz}px;"></span>`;
-  document.getElementById("dash-grid").innerHTML = h;
-  const left = Math.round(total-lived), pct = Math.round((lived/total)*100);
-  document.getElementById("dash-wks").textContent = left.toLocaleString();
-  document.getElementById("dash-unit").textContent = dashUnit + " remaining";
-  document.getElementById("dash-stats").innerHTML = `
-    <div class="stat"><div class="stat-val">${Math.round(lived).toLocaleString()}</div><div class="stat-lbl">${dashUnit} lived</div></div>
-    <div class="stat"><div class="stat-val">${left.toLocaleString()}</div><div class="stat-lbl">${dashUnit} left</div></div>
-    <div class="stat"><div class="stat-val">${pct}%</div><div class="stat-lbl">elapsed</div></div>
-    <div class="stat"><div class="stat-val">${Math.round((exp-age)*365*24).toLocaleString()}</div><div class="stat-lbl">hours left</div></div>`;
-  // color legend
-  const lg = document.getElementById("dash-grid-legend");
-  if (lg) lg.innerHTML = `
-    <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);margin-right:12px">
-      <span style="width:10px;height:10px;border-radius:2px;background:#2C2820;display:inline-block"></span>past
-    </span>
-    <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)">
-      <span style="width:10px;height:10px;border-radius:2px;background:var(--green-bg);border:0.5px solid var(--green);display:inline-block"></span>remaining
-    </span>`;
-}
-document.getElementById("dash-tabs").addEventListener("click", e => {
-  const btn = e.target.closest(".tab"); if (!btn || btn.closest("#person-tabs")) return;
-  document.querySelectorAll("#dash-tabs .tab").forEach(b => b.classList.remove("on"));
-  btn.classList.add("on"); dashUnit = btn.dataset.u; renderDashGrid();
-});
-
-/* ---- dashboard: people ---- */
-function renderDashPnav() {
-  const nav = document.getElementById("dash-pnav"); nav.innerHTML = "";
-  state.people.forEach((p, i) => {
-    const btn = document.createElement("button");
-    btn.className = "pnav-btn" + (i===activeP?" on":"");
-    btn.innerHTML = `${avatarCircle(i, p.type, "20px")} ${p.name||TYPE_LABEL[p.type]||"…"}`;
-    btn.onclick = () => { activeP = i; renderDashPnav(); renderPersonDetail(); };
-    nav.appendChild(btn);
-  });
-  const addWrap = document.createElement("div");
-  addWrap.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;";
-  const editBtn = document.createElement("button");
-  editBtn.className = "pnav-btn pnav-add";
-  editBtn.innerHTML = "✏️ edit people";
-  editBtn.onclick = () => go("s-people");
-  addWrap.appendChild(editBtn);
-  nav.appendChild(addWrap);
+      <p className="text-[14px] leading-[1.7] max-w-[380px] font-light" style={{ color: 'var(--text-secondary)' }}>
+        {pct}% elapsed. {Math.round(hrs / 8760).toLocaleString()} years, {Math.round(hrs / 730).toLocaleString()} months, {Math.round(hrs / 168).toLocaleString()} weeks — the same number, different frames.
+      </p>
+    </motion.div>
+  );
 }
 
-function buildPersonGrid(age, exp, p, unit) {
-  const myTotal = unit==="years"?exp:unit==="months"?exp*12:exp*52;
-  const thTotal = unit==="years"?p.exp:unit==="months"?p.exp*12:p.exp*52;
-  const myLived = unit==="years"?age:unit==="months"?age*12:age*52;
-  const thLived = unit==="years"?p.age:unit==="months"?p.age*12:p.age*52;
-  const myRem = myTotal - myLived;
-  const thRem = thTotal - thLived;
-  const shared = Math.max(0, Math.min(myRem, thRem));
-  const past = Math.min(myLived, thLived);
-  const total = Math.max(myTotal, thTotal);
-  const sz = unit==="years"?16:unit==="months"?10:8;
-  let h = "";
-  for (let u = 0; u < total; u++) {
-    const inMe = u < myTotal, inThem = u < thTotal;
-    let cls;
-    if (u < past) cls = "past";
-    else if (u < past + shared && inMe && inThem) cls = "shared";
-    else if (inMe || inThem) cls = "alone";
-    else continue;
-    h += `<span class="cell ${cls}" style="width:${sz}px;height:${sz}px;"></span>`;
+/* ─── Life Grid ─── */
+function LifeGrid({ store }: { store: ReturnType<typeof useStore> }) {
+  const { state, dashUnit } = store;
+  const { age, exp } = state;
+  const cellsPerYear = dashUnit === 'weeks' ? 52 : dashUnit === 'months' ? 12 : 1;
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.15, ease: EASE_TUPLE }} className="mb-16">
+      <div className="text-[10px] uppercase tracking-[0.14em] mb-3" style={{ color: 'var(--text-secondary)' }}>Life in {dashUnit}</div>
+      <div className="flex gap-5 mb-5">
+        <span className="flex items-center gap-2 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+          <span className="w-2.5 h-2.5 rounded-[2px] inline-block" style={{ background: 'var(--cell-past)' }} />Elapsed
+        </span>
+        <span className="flex items-center gap-2 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+          <span className="w-2.5 h-2.5 rounded-[2px] inline-block" style={{ background: 'var(--cell-future-bg)', border: '1px solid rgba(74,140,111,0.35)' }} />Remaining
+        </span>
+      </div>
+      <div className="space-y-4">
+        {LIFE_PHASES.map((phase, pi) => {
+          const phaseEnd = Math.min(phase.end, exp);
+          if (phase.start >= exp) return null;
+          const totalYears = phaseEnd - phase.start;
+          const phaseTotalCells = totalYears * cellsPerYear;
+          const phaseLivedCells = Math.max(0, Math.min(phaseTotalCells, Math.round((age - phase.start) * cellsPerYear)));
+          const isCurrent = age >= phase.start && age < phaseEnd;
+          return (
+            <div key={phase.label} className="flex gap-3 items-start">
+              <div className="w-14 flex-shrink-0 pt-[2px]">
+                <div className="text-[9px] uppercase tracking-[0.12em] leading-tight" style={{ color: 'var(--text-secondary)' }}>{phase.label}</div>
+                <div className="text-[10px] font-mono mt-0.5" style={{ color: 'var(--text-muted)' }}>{phase.start}-{phaseEnd}</div>
+              </div>
+              <div className="flex-1 flex flex-wrap gap-[3px]">
+                {[...Array(phaseTotalCells)].map((_, i) => {
+                  const isPast = i < phaseLivedCells;
+                  const cellProgress = phase.start + (i / cellsPerYear);
+                  const isCurrentCell = isCurrent && Math.abs(cellProgress - age) < (1 / cellsPerYear);
+                  return (
+                    <motion.div key={i} className="rounded-[2px] flex-shrink-0" style={{
+                      width: dashUnit === 'years' ? 14 : dashUnit === 'months' ? 8 : 6,
+                      height: dashUnit === 'years' ? 14 : dashUnit === 'months' ? 8 : 6,
+                      background: isPast ? 'var(--cell-past)' : isCurrentCell ? 'var(--emerald)' : 'var(--cell-future-bg)',
+                      border: isPast ? 'none' : `1px solid ${isCurrentCell ? 'var(--emerald)' : 'rgba(74,140,111,0.35)'}`,
+                      boxShadow: isCurrentCell ? '0 0 6px var(--emerald-glow)' : 'none',
+                    }} initial={{ opacity: 0, scale: 0 }} animate={{ opacity: isPast ? 0.9 : 1, scale: 1 }}
+                    transition={{ delay: 0.3 + pi * 0.08 + i * 0.003, duration: 0.2 }} whileHover={{ scale: 1.8, zIndex: 10 }} />
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── People Section ─── */
+function PeopleSection({ store }: { store: ReturnType<typeof useStore> }) {
+  const { state, activePerson, setActivePerson, personUnit, setPersonUnit, setScreen } = store;
+  const [showEdit, setShowEdit] = useState(false);
+  if (!state.people.length) {
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-16">
+        <div className="text-[10px] uppercase tracking-[0.14em] mb-4" style={{ color: 'var(--text-secondary)' }}>People</div>
+        <motion.button className="btn-ghost-premium px-4 py-2.5 text-[13px]" onClick={() => setScreen('people')} whileHover={{ scale: 1.02 }}>Add people →</motion.button>
+      </motion.div>
+    );
   }
-  return { html: h, shared, myRem, thRem, past };
-}
-
-function renderPersonDetail() {
-  const c = document.getElementById("dash-person-detail");
-  if (!c || !state.people.length) { c.innerHTML = ""; return; }
-  if (activeP >= state.people.length) activeP = 0;
-  const p = state.people[activeP];
-  const color = PALETTE[activeP % PALETTE.length];
+  const p = state.people[activePerson];
+  if (!p) return null;
+  const color = PALETTE[activePerson % PALETTE.length];
   const age = state.age, exp = state.exp;
   const myRemYrs = Math.max(0, exp - age);
   const thRemYrs = Math.max(0, p.exp - p.age);
   const sharedYrs = Math.max(0, Math.min(myRemYrs, thRemYrs));
   const sharedWks = Math.round(sharedYrs * 52);
-  const cmap = {daily:365, weekly:52, monthly:12, yearly:2};
-  const encLeft = Math.round(sharedYrs * (cmap[p.contact]||52));
-  const encName = {daily:"days",weekly:"weeks",monthly:"months",yearly:"years"}[p.contact];
-  const whoGoes = myRemYrs < thRemYrs ? "me" : "them";
+  const sharedMonths = Math.round(sharedYrs * 12);
+  const cmap: Record<string, number> = { daily: 365, weekly: 52, monthly: 12, yearly: 2 };
+  const encLeft = Math.round(sharedYrs * (cmap[p.contact] || 52));
+  const encName = { daily: 'days', weekly: 'weeks', monthly: 'months', yearly: 'years' }[p.contact];
   const myAgeAtEnd = Math.round(age + sharedYrs);
   const thAgeAtEnd = Math.round(p.age + sharedYrs);
-  const myBY=2026-age, thBY=2026-p.age;
-  const myDY=myBY+exp, thDY=thBY+p.exp;
-  const tlMin=Math.min(myBY,thBY), tlMax=Math.max(myDY,thDY), tlSpan=Math.max(1,tlMax-tlMin);
-  const ovStart=Math.max(2026,myBY,thBY);
-  const myS=((myBY-tlMin)/tlSpan*100).toFixed(1), myW=(exp/tlSpan*100).toFixed(1);
-  const thS=((thBY-tlMin)/tlSpan*100).toFixed(1), thW=(p.exp/tlSpan*100).toFixed(1);
-  const ovS=((ovStart-tlMin)/tlSpan*100).toFixed(1), ovW=(sharedYrs/tlSpan*100).toFixed(1);
-  const pastEnc = Math.round(Math.min(p.age, age) * (cmap[p.contact]||52));
-  const totalEnc = Math.round((sharedYrs + Math.min(p.age, age)) * (cmap[p.contact]||52));
-  const pctElapsed = totalEnc > 0 ? Math.round((pastEnc/totalEnc)*100) : 0;
-  const { html: gridH } = buildPersonGrid(age, exp, p, personUnit);
-  const isPet = p.type !== "person";
-  let verdict = "";
-  if (isPet) verdict = `${p.name||TYPE_LABEL[p.type]} doesn't know any of this. You do. You have roughly <strong>${encLeft.toLocaleString()} ${encName}</strong> left together. After that, the absence will be permanent.`;
-  else if (whoGoes==="me") verdict = `If the statistics hold, you'll leave first — at <strong>${myAgeAtEnd}</strong>, while ${p.name} is <strong>${thAgeAtEnd}</strong>. You have <strong>${encLeft.toLocaleString()} ${encName}</strong> between now and that moment.`;
-  else verdict = `If the statistics hold, you'll watch ${p.name} go — at <strong>${thAgeAtEnd}</strong>, while you're <strong>${myAgeAtEnd}</strong>. You have <strong>${encLeft.toLocaleString()} ${encName}</strong> left. None of them are the last one yet — but one of them will be.`;
+  const isPet = p.type !== 'person';
+  const heroNum = personUnit === 'years' ? Math.round(sharedYrs) : personUnit === 'months' ? sharedMonths : sharedWks;
+  const heroLabel = personUnit === 'years' ? 'years left together' : personUnit === 'months' ? 'months left together' : 'weeks left together';
 
-  const sharedMonths = Math.round(sharedYrs * 12);
-  const sharedYrsRounded = Math.round(sharedYrs);
-  const heroNum   = personUnit==="years" ? sharedYrsRounded : personUnit==="months" ? sharedMonths : sharedWks;
-  const heroLabel = personUnit==="years" ? "years left together" : personUnit==="months" ? "months left together" : "weeks left together";
+  const myTotal = personUnit === 'years' ? exp : personUnit === 'months' ? exp * 12 : exp * 52;
+  const thTotal = personUnit === 'years' ? p.exp : personUnit === 'months' ? p.exp * 12 : p.exp * 52;
+  const myLived = personUnit === 'years' ? age : personUnit === 'months' ? age * 12 : age * 52;
+  const thLived = personUnit === 'years' ? p.age : personUnit === 'months' ? p.age * 12 : p.age * 52;
+  const myRem = myTotal - myLived;
+  const thRem = thTotal - thLived;
+  const shared = Math.max(0, Math.min(myRem, thRem));
+  const past = Math.min(myLived, thLived);
+  const total = Math.max(myTotal, thTotal);
+  const cellSize = personUnit === 'years' ? 14 : personUnit === 'months' ? 9 : 7;
 
-  c.innerHTML = `
-    <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:4px">
-      <div style="font-size:36px;font-weight:500;font-family:var(--mono);color:var(--text);line-height:1">${heroNum.toLocaleString()}</div>
-      <div style="font-size:13px;color:var(--text2)">${heroLabel}</div>
-    </div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:1.25rem;font-family:var(--serif)">~${Math.round(sharedYrs)} more years · ${whoGoes==="me"?"you leave at "+myAgeAtEnd:"goodbye at their age "+thAgeAtEnd}</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-      <div class="eyebrow" style="margin-bottom:0">Shared timeline</div>
-      <div class="tabs" id="person-tabs" style="margin-bottom:0">
-        <button class="tab${personUnit==="weeks"?" on":""}" data-pu="weeks">Weeks</button>
-        <button class="tab${personUnit==="months"?" on":""}" data-pu="months">Months</button>
-        <button class="tab${personUnit==="years"?" on":""}" data-pu="years">Years</button>
+  const myBY = 2026 - age, thBY = 2026 - p.age;
+  const myDY = myBY + exp, thDY = thBY + p.exp;
+  const tlMin = Math.min(myBY, thBY), tlMax = Math.max(myDY, thDY), tlSpan = Math.max(1, tlMax - tlMin);
+  const ovStart = Math.max(2026, myBY, thBY);
+  const myS = ((myBY - tlMin) / tlSpan * 100).toFixed(1);
+  const myW = (exp / tlSpan * 100).toFixed(1);
+  const thS = ((thBY - tlMin) / tlSpan * 100).toFixed(1);
+  const thW = (p.exp / tlSpan * 100).toFixed(1);
+  const ovS = ((ovStart - tlMin) / tlSpan * 100).toFixed(1);
+  const ovW = (sharedYrs / tlSpan * 100).toFixed(1);
+
+  const pastEnc = Math.round(Math.min(p.age, age) * (cmap[p.contact] || 52));
+  const totalEnc = Math.round((sharedYrs + Math.min(p.age, age)) * (cmap[p.contact] || 52));
+  const pctElapsed = totalEnc > 0 ? Math.round((pastEnc / totalEnc) * 100) : 0;
+
+  let verdict = '';
+  if (isPet) verdict = `${p.name || TYPE_LABEL[p.type]} doesn't know any of this. You do. Roughly <strong style="color:var(--text-primary)">${encLeft.toLocaleString()} ${encName}</strong> remain together.`;
+  else if (myRemYrs < thRemYrs) verdict = `If the statistics hold, you leave first — at <strong style="color:var(--text-primary)">${myAgeAtEnd}</strong>, while ${p.name} is <strong style="color:var(--text-primary)">${thAgeAtEnd}</strong>. <strong style="color:var(--text-primary)">${encLeft.toLocaleString()} ${encName}</strong> between now and then.`;
+  else verdict = `If the statistics hold, you watch ${p.name} go — at <strong style="color:var(--text-primary)">${thAgeAtEnd}</strong>, while you're <strong style="color:var(--text-primary)">${myAgeAtEnd}</strong>. <strong style="color:var(--text-primary)">${encLeft.toLocaleString()} ${encName}</strong> remaining.`;
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3, ease: EASE_TUPLE }} className="mb-16">
+      <div className="text-[10px] uppercase tracking-[0.14em] mb-4" style={{ color: 'var(--text-secondary)' }}>People</div>
+      <div className="flex gap-3 mb-8 flex-wrap items-center">
+        {state.people.map((person, i) => (
+          <motion.button key={`${person.name}-${i}`} className={`flex flex-col items-center gap-1.5 transition-all ${activePerson === i ? 'scale-105' : 'opacity-60 hover:opacity-90'}`}
+            onClick={() => { setActivePerson(i); setShowEdit(false); }} whileHover={{ scale: 1.08, y: -2 }} whileTap={{ scale: 0.95 }}>
+            <motion.div className={`w-9 h-9 rounded-full flex-shrink-0 ${activePerson === i ? 'ring-2 ring-[var(--text-primary)] ring-offset-2 ring-offset-[var(--page-bg)]' : ''}`}
+              style={{ background: avatarBg(i, person.type), boxShadow: (person.type === 'cat' || person.type === 'dog') ? 'inset 0 0 0 2px rgba(0,0,0,0.12)' : 'none' }} layoutId={`avatar-${i}`} />
+            <span className="text-[9px] max-w-[48px] truncate" style={{ color: 'var(--text-secondary)' }}>{person.name || TYPE_LABEL[person.type]}</span>
+          </motion.button>
+        ))}
+        <motion.button className="text-[11px] ml-2 transition-colors" style={{ color: 'var(--text-tertiary)' }} onClick={() => setScreen('people')} whileHover={{ x: 2 }}>Edit</motion.button>
       </div>
-    </div>
-    <div class="legend">
-      <span class="leg"><span class="leg-dot" style="background:#2C2820"></span>past</span>
-      <span class="leg"><span class="leg-dot" style="background:#1D9E75"></span>shared remaining</span>
-      <span class="leg"><span class="leg-dot" style="background:var(--green-bg);border:0.5px solid var(--green-border);opacity:0.7"></span>alone</span>
-    </div>
-    <div class="grid-wrap">${gridH}</div>
-    <div style="margin-bottom:1.25rem">
-      <div class="tl-row"><div class="tl-lbl">You</div><div class="tl-outer"><div class="tl-seg" style="left:${myS}%;width:${myW}%;background:var(--bg2);border:0.5px solid var(--border2)"></div><div class="tl-seg" style="left:${ovS}%;width:${ovW}%;background:${color}"></div></div><div class="tl-age">${exp}</div></div>
-      <div class="tl-row"><div class="tl-lbl">${p.name||TYPE_LABEL[p.type]}</div><div class="tl-outer"><div class="tl-seg" style="left:${thS}%;width:${thW}%;background:var(--bg2);border:0.5px solid var(--border2)"></div><div class="tl-seg" style="left:${ovS}%;width:${ovW}%;background:${color}"></div></div><div class="tl-age">${p.exp}</div></div>
-    </div>
-    <div class="enc-block">
-      <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px">Encounters remaining</div>
-      <div style="font-size:13px;color:var(--text2);font-family:var(--serif)">At ${p.contact} contact — ${encLeft.toLocaleString()} ${encName} left with ${p.name||TYPE_LABEL[p.type]}.</div>
-      <div class="enc-bar-wrap"><div class="enc-bar" style="width:${Math.min(100,pctElapsed)}%;background:${color}"></div></div>
-      <div style="font-size:11px;color:var(--text2)">${pctElapsed}% of your time together is already behind you</div>
-    </div>
-    <div class="verdict-block"><p>${verdict}</p></div>`;
 
-  document.getElementById("person-tabs").addEventListener("click", e => {
-    const btn = e.target.closest("[data-pu]"); if (!btn) return;
-    personUnit = btn.dataset.pu; renderPersonDetail();
-  });
+      <AnimatePresence mode="wait">
+        <motion.div key={activePerson} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.35 }}>
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <div className="text-[20px] font-light" style={{ color: 'var(--text-primary)' }}>{p.name || TYPE_LABEL[p.type]}</div>
+              <div className="text-[12px] mt-0.5" style={{ color: 'var(--text-secondary)' }}>{TYPE_LABEL[p.type]} · {p.age} yrs</div>
+            </div>
+            <div className="text-right">
+              <motion.div className="text-[32px] font-light tabular-nums leading-none" style={{ color: 'var(--text-primary)' }} key={heroNum} initial={{ scale: 1.1 }} animate={{ scale: 1 }}>{heroNum.toLocaleString()}</motion.div>
+              <div className="text-[10px] uppercase tracking-[0.1em] mt-1.5" style={{ color: 'var(--text-secondary)' }}>{heroLabel}</div>
+            </div>
+          </div>
+          <div className="flex gap-4 mb-4">
+            {(['weeks', 'months', 'years'] as const).map(u => (
+              <button key={u} className={`text-[10px] uppercase tracking-[0.1em] pb-1 border-b transition-colors ${personUnit === u ? 'border-[var(--text-primary)]' : 'border-transparent'}`}
+                style={personUnit === u ? { color: 'var(--text-primary)' } : { color: 'var(--text-tertiary)' }} onClick={() => setPersonUnit(u)}>{u}</button>
+            ))}
+          </div>
+          <div className="flex gap-4 mb-3 text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-[1px] inline-block" style={{ background: 'var(--cell-past)' }} />past</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-[1px] inline-block" style={{ background: color }} />shared</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-[1px] inline-block" style={{ background: 'var(--cell-future-bg)', border: '0.5px solid rgba(74,140,111,0.35)' }} />alone</span>
+          </div>
+          <div className="flex flex-wrap gap-[2px] mb-8">
+            {[...Array(total)].map((_, i) => {
+              const inMe = i < myTotal, inThem = i < thTotal;
+              let cls = '';
+              if (i < past) cls = 'past';
+              else if (i < past + shared && inMe && inThem) cls = 'shared';
+              else if (inMe || inThem) cls = 'alone';
+              else return null;
+              return (
+                <motion.div key={i} className="rounded-[1px] flex-shrink-0" style={{
+                  width: cellSize, height: cellSize,
+                  background: cls === 'past' ? 'var(--cell-past)' : cls === 'shared' ? color : 'transparent',
+                  border: cls === 'alone' ? '1px solid rgba(74,140,111,0.28)' : 'none', opacity: cls === 'alone' ? 0.4 : 1,
+                }} initial={{ opacity: 0, scale: 0 }} animate={{ opacity: cls === 'alone' ? 0.4 : 1, scale: 1 }} transition={{ delay: i * 0.003 }} whileHover={{ scale: 2, zIndex: 10 }} />
+              );
+            })}
+          </div>
+          <div className="mb-8">
+            <div className="text-[9px] uppercase tracking-[0.12em] mb-3" style={{ color: 'var(--text-secondary)' }}>Lifespans — overlap shown in color</div>
+            <div className="space-y-2">
+              {[{ label: 'You', start: myS, width: myW }, { label: p.name || TYPE_LABEL[p.type], start: thS, width: thW }].map((row, ri) => (
+                <div key={ri} className="flex items-center gap-2">
+                  <div className="text-[10px] w-16 text-right flex-shrink-0" style={{ color: 'var(--text-secondary)' }}>{row.label}</div>
+                  <div className="flex-1 h-3.5 rounded-sm overflow-hidden relative" style={{ background: 'var(--bar-bg)' }}>
+                    <div className="absolute inset-y-0 rounded-sm" style={{ left: `${row.start}%`, width: `${row.width}%`, background: '#C8C2B8' }} />
+                    <div className="absolute inset-y-0 rounded-sm" style={{ left: `${ovS}%`, width: `${ovW}%`, background: color, opacity: 0.9 }} />
+                  </div>
+                  <div className="text-[9px] font-mono w-6" style={{ color: 'var(--text-tertiary)' }}>{ri === 0 ? exp : p.exp}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="glass-card rounded-xl p-5 mb-6" style={{ borderTop: `3px solid ${color}` }}>
+            <div className="text-[10px] uppercase tracking-[0.1em] mb-2" style={{ color: 'var(--text-secondary)' }}>Encounters remaining</div>
+            <motion.div className="text-[26px] font-light tabular-nums mb-1" style={{ color: 'var(--text-primary)' }} key={encLeft} initial={{ scale: 1.1 }} animate={{ scale: 1 }}>{encLeft.toLocaleString()}</motion.div>
+            <div className="text-[12px] mb-3" style={{ color: 'var(--text-secondary)' }}>at {p.contact} contact with {p.name || TYPE_LABEL[p.type]}</div>
+            <div className="h-[6px] rounded-full overflow-hidden mb-2" style={{ background: 'var(--bar-bg)' }}>
+              <motion.div className="h-full rounded-full" style={{ background: color }} initial={{ width: 0 }} animate={{ width: `${Math.min(100, pctElapsed)}%` }} transition={{ duration: 0.8, ease: EASE_TUPLE }} />
+            </div>
+            <div className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{pctElapsed}% of your time together is already behind you</div>
+          </div>
+          <p className="text-[14px] leading-[1.75] mb-6" style={{ color: 'var(--text-secondary)' }} dangerouslySetInnerHTML={{ __html: verdict }} />
+          <button className="text-[11px] transition-colors" style={{ color: 'var(--text-tertiary)' }} onClick={() => setShowEdit(!showEdit)}>{showEdit ? 'Close' : 'Edit details'}</button>
+          <AnimatePresence>
+            {showEdit && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3 }} className="overflow-hidden">
+                <div className="glass-card rounded-xl p-4 mt-3">
+                  <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-2.5 mb-3">
+                    <div><label className="text-[9px] uppercase tracking-[0.1em] mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Name</label><input type="text" value={p.name} onChange={e => store.updatePerson(activePerson, 'name', e.target.value)} className="premium-input w-full px-2.5 py-2 text-[13px]" /></div>
+                    <div><label className="text-[9px] uppercase tracking-[0.1em] mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Age</label><input type="number" value={p.age} onChange={e => store.updatePerson(activePerson, 'age', parseInt(e.target.value) || 0)} className="premium-input w-full px-2.5 py-2 text-[13px]" /></div>
+                    <div><label className="text-[9px] uppercase tracking-[0.1em] mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Exp.</label><input type="number" value={p.exp} onChange={e => store.updatePerson(activePerson, 'exp', parseInt(e.target.value) || 1)} className="premium-input w-full px-2.5 py-2 text-[13px]" /></div>
+                    <div><label className="text-[9px] uppercase tracking-[0.1em] mb-1 block" style={{ color: 'var(--text-tertiary)' }}>Contact</label><select value={p.contact} onChange={e => store.updatePerson(activePerson, 'contact', e.target.value)} className="premium-input w-full px-2 py-2 text-[12px] appearance-none"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
+                  </div>
+                  <motion.button className="text-[11px] transition-colors" style={{ color: 'var(--rose)' }} onClick={() => { store.removePerson(activePerson); setShowEdit(false); }} whileHover={{ x: 2 }}>Remove person</motion.button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Continue to Card 5 */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="mt-10 flex justify-center">
+        <motion.button className="btn-premium px-10 py-3.5 text-[14px] font-medium flex items-center gap-2"
+          onClick={() => setScreen('analysis')} whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}>
+          How is my time used?
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </motion.button>
+      </motion.div>
+    </motion.div>
+  );
 }
 
-/* ---- burndown: donut chart ---- */
-function renderBurndown() {
-  const hl = hoursLeft();
-  const cs = getComputedStyle(document.documentElement);
-  const clrAccent = '#D4852A';
-  const clrPast   = '#2C2820';
-  const clrGreen  = '#5A9478';
-  const clrBg2    = cs.getPropertyValue('--bg2').trim() || '#EDE5D8';
-
-  const otherHrs  = state.audit.filter(a=>a.label!=="Screen time").reduce((s,a)=>s+a.hpd*(state.exp-state.age)*365,0);
-  const screenHrs = state.audit.find(a=>a.label==="Screen time").hpd*(state.exp-state.age)*365;
-  const freeHrs   = Math.max(0, hl - otherHrs - screenHrs);
-
-  // New psychological palette — colorblind safe, cold/warm contrast
-  const FIXED_COLORS = ["#5D7A8C","#2C3E50","#CFD8DC"]; // sleep, work, commute
-  const fixedAudit = state.audit.filter(a=>a.label!=="Screen time");
-
-  const segments = [
-    ...fixedAudit.map((a,i)=>({
-      label: a.label,
-      hrs: a.hpd*(state.exp-state.age)*365,
-      color: FIXED_COLORS[i % FIXED_COLORS.length],
-      opacity: 1
-    })),
-    { label:"Screen time", hrs: screenHrs, color: "#E67E22", opacity:1 },
-    { label:"Mindful time", hrs: freeHrs,   color: "#1ABC9C", opacity:1 },
-  ];
-
-  const total = segments.reduce((s,seg)=>s+seg.hrs, 0);
-  const size = 140, cx = size/2, cy = size/2, r = 62, inner = 34;
-  let startAngle = -Math.PI/2;
-  let paths = "";
-  let gapLines = "";
-
-  segments.forEach(seg => {
-    const pct = seg.hrs / total;
-    const angle = pct * 2 * Math.PI;
-    const endAngle = startAngle + angle;
-    if (pct < 0.001) { startAngle = endAngle; return; }
-    const x1 = cx + r*Math.cos(startAngle), y1 = cy + r*Math.sin(startAngle);
-    const x2 = cx + r*Math.cos(endAngle),   y2 = cy + r*Math.sin(endAngle);
-    const xi1 = cx + inner*Math.cos(startAngle), yi1 = cy + inner*Math.sin(startAngle);
-    const xi2 = cx + inner*Math.cos(endAngle),   yi2 = cy + inner*Math.sin(endAngle);
-    const large = angle > Math.PI ? 1 : 0;
-    paths += `<path d="M${xi1},${yi1} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} L${xi2},${yi2} A${inner},${inner} 0 ${large},0 ${xi1},${yi1} Z" fill="${seg.color}" opacity="${seg.opacity}" />`;
-    // gap line at start of each segment
-    gapLines += `<line x1="${cx+inner*Math.cos(startAngle)}" y1="${cy+inner*Math.sin(startAngle)}" x2="${cx+r*Math.cos(startAngle)}" y2="${cy+r*Math.sin(startAngle)}" stroke="#F7F4EE" stroke-width="2.5"/>`;
-    startAngle = endAngle;
-  });
-
-  const freePct = Math.round((freeHrs/total)*100);
-  const screenPct = Math.round((screenHrs/total)*100);
-  const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#F7F4EE';
-
-  const svgCenterText = `
-    <text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="18" font-weight="500" font-family="monospace" fill="#2C2820">${freePct}%</text>
-    <text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="8" letter-spacing="0.08em" fill="#8A7A68" font-family="-apple-system,sans-serif">FREE</text>`;
-
-  const legendRows = [
-    ...fixedAudit.map((a,i)=>{
-      const p = Math.round((a.hpd*(state.exp-state.age)*365/total)*100);
-      return `<div class="donut-legend-row"><div class="donut-legend-dot" style="background:${FIXED_COLORS[i%FIXED_COLORS.length]}"></div><span class="donut-legend-lbl">${a.label}</span><span class="donut-legend-pct">${p}%</span></div>`;
-    }),
-    `<div class="donut-legend-row"><div class="donut-legend-dot" style="background:#E67E22"></div><span class="donut-legend-lbl">Screen time</span><span class="donut-legend-pct" style="color:#C0601A;font-weight:600">${screenPct}%</span></div>`,
-    `<div class="donut-legend-row"><div class="donut-legend-dot" style="background:#1ABC9C"></div><span class="donut-legend-lbl">Mindful time</span><span class="donut-legend-pct" style="color:#148F77;font-weight:600">${freePct}%</span></div>`,
-  ].join("");
-
-  document.getElementById("dash-burndown").innerHTML = `
-    <div class="donut-wrap">
-      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="flex-shrink:0">
-        <circle cx="${cx}" cy="${cy}" r="${(r+inner)/2}" fill="none" stroke="${bgColor}" stroke-width="${r-inner+1}"/>
-        ${paths}
-        ${gapLines}
-        ${svgCenterText}
-      </svg>
-      <div class="donut-legend">${legendRows}</div>
-    </div>`;
-
-  const freeRawYrs = yrs(Math.max(0, hl - otherHrs));
-  const screenYrs  = yrs(screenHrs);
-  document.getElementById("dash-verdict").innerHTML = `
-    <div class="verdict-line">After sleep, work, and commute, you have <strong>${freeRawYrs} years</strong> of remaining life that aren't already spoken for.</div>
-    <div class="verdict-line punch">You will spend <strong style="color:#E67E22">${screenYrs} of them</strong> on your phone. That leaves <strong style="color:#1ABC9C">${yrs(Math.max(0, hoursLeft() - otherHrs - state.audit.find(a=>a.label==="Screen time").hpd*(state.exp-state.age)*365))} years</strong> of mindful time.</div>`;
-}
-
-/* ---- what-if ---- */
-function renderWhatIf() {
-  const sl = document.getElementById("wi-slider"); if (!sl) return;
-  // init slider to current screen time value
-  const currentHpd = state.audit.find(a=>a.label==="Screen time").hpd;
-  if (parseFloat(sl.dataset.init) !== currentHpd) {
-    sl.value = currentHpd;
-    sl.dataset.init = currentHpd;
-  }
-  const newHpd = parseFloat(sl.value);
-  document.getElementById("wi-hpd").textContent = newHpd + "h";
-  const hl = hoursLeft();
-  const otherHrs = state.audit.filter(a=>a.label!=="Screen time").reduce((s,a)=>s+a.hpd*(state.exp-state.age)*365,0);
-  const currentScreen = state.audit.find(a=>a.label==="Screen time").hpd*(state.exp-state.age)*365;
-  const newScreen = newHpd*(state.exp-state.age)*365;
-  const currentFree = Math.max(0, hl-otherHrs-currentScreen);
-  const newFree = Math.max(0, hl-otherHrs-newScreen);
-  const delta = newFree - currentFree;
-  const deltaYrs = yrs(Math.abs(delta));
-  const gained = delta > 0;
-  document.getElementById("wi-result").innerHTML = `
-    <div class="wi-card">
-      <div class="wi-val ${gained?"green":"orange"}">${yrs(newFree)}y</div>
-      <div class="wi-lbl">Free years</div>
-      <div class="wi-delta ${gained?"green":"orange"}">${gained?"+":"-"}${deltaYrs}y vs now</div>
-    </div>
-    <div class="wi-card">
-      <div class="wi-val orange">${yrs(newScreen)}y</div>
-      <div class="wi-lbl">On screen</div>
-      <div class="wi-delta ${gained?"green":"orange"}">${gained?"-":"+"}${deltaYrs}y vs now</div>
-    </div>
-    <div class="wi-card">
-      <div class="wi-val" style="color:var(--text)">${Math.round(Math.abs(delta)/8760*365)}</div>
-      <div class="wi-lbl">days ${gained?"reclaimed":"lost"}/year</div>
-      <div class="wi-delta" style="color:var(--text2)">${Math.round(Math.abs(delta)/24)} days total</div>
-    </div>`;
-}
-document.getElementById("wi-slider").addEventListener("input", renderWhatIf);
-
-/* ---- profile card ---- */
-function renderProfileCard() {
-  const c = document.getElementById("dash-profile-card"); if (!c) return;
-  const wl = Math.max(0, (state.exp - state.age) * 52);
-  c.innerHTML = `
-    <div class="profile-card">
-      <div class="profile-left">
-        <div class="profile-avatar">${state.age}</div>
-        <div>
-          <div class="profile-name">Age ${state.age} · exp. ${state.exp}</div>
-          <div class="profile-sub">${wl.toLocaleString()} weeks remaining · ${state.people.length} ${state.people.length===1?"person":"people"}<span class="saved-badge" id="saved-badge"> · saved</span></div>
+/* ─── Main Dashboard ─── */
+export default function Dashboard({ store, wallStore: _wallStore }: Props) {
+  const { state, setScreen } = store;
+  return (
+    <div className="max-w-lg mx-auto px-6 py-12">
+      <motion.div className="flex justify-between items-center mb-12 pb-6" style={{ borderBottom: '1px solid var(--divider)' }}
+        initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+        <div className="flex items-center gap-3">
+          <span className="text-[12px] font-mono" style={{ color: 'var(--text-secondary)' }}>Age {state.age} · exp. {state.exp}</span>
         </div>
-      </div>
-      <div class="profile-actions">
-        <button class="profile-btn" id="btn-settings">✎ edit</button>
-      </div>
-    </div>`;
-  document.getElementById("btn-settings").onclick = () => go("s-you");
+        <motion.button className="text-[11px] transition-colors" style={{ color: 'var(--text-tertiary)' }} onClick={() => setScreen('you')} whileHover={{ x: 1 }}>Edit profile</motion.button>
+      </motion.div>
+      <HeroSection store={store} />
+      <div className="mb-16" style={{ height: '1px', background: 'var(--divider)' }} />
+      <LifeGrid store={store} />
+      <div className="mb-16" style={{ height: '1px', background: 'var(--divider)' }} />
+      <PeopleSection store={store} />
+    </div>
+  );
 }
-
-/* ════════════════════════════════
-   MINDFUL WALL
-   ════════════════════════════════ */
-const WALL_KEY = "tfc_wall_v1";
-let wallEntries = [];
-try { wallEntries = JSON.parse(localStorage.getItem(WALL_KEY) || "[]"); } catch(e) { wallEntries = []; }
-
-let wallSelDate = new Date().toISOString().slice(0,10);
-let wallSelWith = [];
-let wallSelMood = "";
-let wallSelWx   = "";
-let wallViewY   = new Date().getFullYear();
-let wallViewM   = new Date().getMonth();
-
-function wallSave() {
-  try { localStorage.setItem(WALL_KEY, JSON.stringify(wallEntries)); } catch(e) {}
-}
-function wallCountOnDate(ds) { return wallEntries.filter(e => e.date === ds).length; }
-function wallCountThisMonth(name) {
-  const n = new Date();
-  return wallEntries.filter(e => {
-    const d = new Date(e.date + "T12:00:00");
-    return e.with.includes(name) && d.getMonth()===n.getMonth() && d.getFullYear()===n.getFullYear();
-  }).length;
-}
-function wallTotalLogged(name) { return wallEntries.filter(e => e.with.includes(name)).length; }
-function wallStreak(name) {
-  const dates = [...new Set(wallEntries.filter(e=>e.with.includes(name)).map(e=>e.date))].sort().reverse();
-  if (!dates.length) return 0;
-  let s = 0, cur = new Date(); cur.setHours(0,0,0,0);
-  for (const ds of dates) {
-    const d = new Date(ds+"T12:00:00"); d.setHours(0,0,0,0);
-    if (Math.round((cur-d)/86400000) <= 1) { s++; cur = d; } else break;
-  }
-  return s;
-}
-function wallFmtDate(ds) {
-  const d = new Date(ds+"T12:00:00");
-  return d.toLocaleDateString("en", {weekday:"short", day:"numeric", month:"short", year:"numeric"});
-}
-function wallDaysInMonth(y,m) { return new Date(y,m+1,0).getDate(); }
-function wallFirstDow(y,m) { let d=new Date(y,m,1).getDay(); return d===0?6:d-1; }
-function wallShowToast(msg) {
-  const t = document.getElementById("wf-toast"); if (!t) return;
-  t.textContent = msg; t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2200);
-}
-
-function renderWallCal() {
-  const lbl = document.getElementById("wall-cal-label"); if (!lbl) return;
-  lbl.textContent = new Date(wallViewY, wallViewM, 1).toLocaleDateString("en", {month:"long", year:"numeric"});
-  const grid = document.getElementById("wall-cal-grid"); grid.innerHTML = "";
-  ["M","T","W","T","F","S","S"].forEach(d => {
-    const el = document.createElement("div"); el.className = "cal-dow"; el.textContent = d; grid.appendChild(el);
-  });
-  const first = wallFirstDow(wallViewY, wallViewM);
-  const days  = wallDaysInMonth(wallViewY, wallViewM);
-  const todayStr = new Date().toISOString().slice(0,10);
-  for (let i=0; i<first; i++) { const el=document.createElement("div"); el.className="cal-day empty"; grid.appendChild(el); }
-  for (let d=1; d<=days; d++) {
-    const ds = `${wallViewY}-${String(wallViewM+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-    const cnt = wallCountOnDate(ds);
-    const hClass = ["h0","h1","h2","h3","h4"][Math.min(cnt,4)];
-    const el = document.createElement("div");
-    let cls = `cal-day ${hClass}`;
-    if (ds === todayStr) cls += " today";
-    if (ds === wallSelDate) cls += " cal-selected";
-    el.className = cls;
-    const num = document.createElement("span"); num.textContent = d; el.appendChild(num);
-    if (cnt > 0) {
-      const dots = document.createElement("div"); dots.className = "cal-dots";
-      for (let i=0; i<Math.min(cnt,4); i++) { const dot=document.createElement("div"); dot.className="cal-dot"; dots.appendChild(dot); }
-      el.appendChild(dots);
-    }
-    el.onclick = () => { wallSelDate = ds; renderWallCal(); renderWallForm(); renderWallDayEntries(); };
-    grid.appendChild(el);
-  }
-}
-
-function renderWallPeople() {
-  const c = document.getElementById("wall-people-dash"); if (!c) return;
-  const CMAP = {daily:365, weekly:52, monthly:12, yearly:2};
-  let html = `<div class="eyebrow" style="margin-bottom:8px">This month</div>`;
-  const wallPeople = [
-    ...state.people,
-    {name:"myself", type:"solo", age:0, exp:0, contact:"daily"}
-  ];
-  wallPeople.forEach((p, i) => {
-    const cnt    = wallCountThisMonth(p.name);
-    const st     = wallStreak(p.name);
-    const tot    = wallTotalLogged(p.name);
-    const isSolo = p.type==="solo";
-    const isActive = wallSelWith.includes(p.name);
-
-    // months remaining from main stats
-    let monthsTag = "";
-    if (!isSolo && p.exp && p.age) {
-      const myRemYrs = Math.max(0, state.exp - state.age);
-      const thRemYrs = Math.max(0, p.exp - p.age);
-      const sharedMo = Math.round(Math.max(0, Math.min(myRemYrs, thRemYrs)) * 12);
-      monthsTag = `<span style="font-size:10px;color:var(--text2);margin-left:6px;font-family:var(--mono)">${sharedMo.toLocaleString()} mo. left together</span>`;
-    }
-
-    html += `
-      <div class="wall-person-row">
-        ${avatarCircle(i, p.type, "30px")}
-        <div class="wp-info">
-          <div class="wp-name">${p.name}${monthsTag}</div>
-          <div class="wp-bar-wrap"><div class="wp-bar-fill" style="width:${Math.min(100,cnt*8)}%;background:${isSolo?"var(--accent)":"var(--green)"}"></div></div>
-          <div class="wp-meta">${cnt} this month · ${tot} total logged${st>=2?" · 🔥 "+st+" streak":""}</div>
-        </div>
-        <button class="wp-log-btn${isActive?" wp-active":""}" data-wname="${p.name}">${isActive?"✓ added":"+ log"}</button>
-      </div>`;
-  });
-  c.innerHTML = html;
-  c.querySelectorAll("[data-wname]").forEach(btn => {
-    btn.addEventListener("click", e => {
-      const n = e.target.dataset.wname;
-      wallSelWith = wallSelWith.includes(n) ? wallSelWith.filter(x=>x!==n) : [...wallSelWith, n];
-      renderWallPeople(); renderWallForm();
-    });
-  });
-}
-
-function renderWallForm() {
-  const todayStr = new Date().toISOString().slice(0,10);
-  const lbl = document.getElementById("wf-date-label"); if (!lbl) return;
-  lbl.textContent = wallSelDate === todayStr ? "Today — " + wallFmtDate(wallSelDate) : wallFmtDate(wallSelDate);
-  // with chips
-  const cc = document.getElementById("wf-with-chips"); cc.innerHTML = "";
-  const wallPeople = [...state.people, {name:"myself",type:"solo"}];
-  wallPeople.forEach((p, i) => {
-    const isSolo = p.type==="solo";
-    const chip = document.createElement("div");
-    chip.className = "wf-chip" + (isSolo?" wf-solo":"") + (wallSelWith.includes(p.name)?" wf-on":"");
-    chip.innerHTML = `<span style="width:10px;height:10px;border-radius:50%;background:${avatarBg(i,p.type)};display:inline-block;flex-shrink:0"></span> ${p.name}`;
-    chip.style.display = "inline-flex";
-    chip.style.alignItems = "center";
-    chip.style.gap = "6px";
-    chip.onclick = () => {
-      wallSelWith = wallSelWith.includes(p.name) ? wallSelWith.filter(x=>x!==p.name) : [...wallSelWith, p.name];
-      renderWallPeople(); renderWallForm();
-    };
-    cc.appendChild(chip);
-  });
-  // mood & weather
-  document.querySelectorAll("#wf-mood-btns .wf-eb").forEach(b => b.classList.toggle("wf-on", b.dataset.mood===wallSelMood));
-  document.querySelectorAll("#wf-wx-btns .wf-eb").forEach(b => b.classList.toggle("wf-on", b.dataset.wx===wallSelWx));
-  const saveBtn = document.getElementById("wf-save-btn");
-  if (saveBtn) saveBtn.disabled = wallSelWith.length === 0;
-}
-
-function renderWallDayEntries() {
-  const c = document.getElementById("wall-day-entries"); if (!c) return;
-  const dayEntries = wallEntries.filter(e => e.date === wallSelDate);
-  if (!dayEntries.length) { c.innerHTML = ""; return; }
-  const todayStr = new Date().toISOString().slice(0,10);
-  const dateLabel = wallSelDate === todayStr ? "Today" : wallFmtDate(wallSelDate);
-  let html = `<div class="day-entries-wrap">
-    <div class="day-entries-header">${dateLabel} — ${dayEntries.length} moment${dayEntries.length>1?"s":""}</div>`;
-  dayEntries.forEach(e => {
-    const tags = e.with.map(w => {
-      const isSolo = w==="myself";
-      return `<span class="de-tag${isSolo?" solo":""}">${isSolo?"🧘 myself":w}</span>`;
-    }).join("");
-    const emojis = [e.mood, e.wx].filter(Boolean).map(x=>`<span class="de-emoji">${x}</span>`).join("");
-    html += `<div class="day-entry-card">
-      <div class="de-top">${tags}${emojis}<button class="de-delete" data-eid="${e.id}">delete</button></div>
-      <div class="de-note${e.note?"":""}">${e.note || '<span class="empty">No note added</span>'}</div>
-    </div>`;
-  });
-  html += `</div>`;
-  c.innerHTML = html;
-  c.querySelectorAll("[data-eid]").forEach(btn => {
-    btn.addEventListener("click", ev => {
-      const id = parseInt(ev.target.dataset.eid);
-      wallEntries = wallEntries.filter(e => e.id !== id);
-      wallSave();
-      renderWallCal(); renderWallPeople(); renderWallDayEntries();
-    });
-  });
-}
-
-function initWallListeners() {
-  document.getElementById("wall-prev-mo").onclick = () => { wallViewM--; if(wallViewM<0){wallViewM=11;wallViewY--;} renderWallCal(); };
-  document.getElementById("wall-next-mo").onclick = () => { wallViewM++; if(wallViewM>11){wallViewM=0;wallViewY++;} renderWallCal(); };
-  document.getElementById("btn-wall-back").onclick = () => go("s-dashboard");
-
-  document.getElementById("wf-mood-btns").addEventListener("click", e => {
-    const btn = e.target.closest(".wf-eb"); if (!btn) return;
-    wallSelMood = wallSelMood===btn.dataset.mood ? "" : btn.dataset.mood;
-    renderWallForm();
-  });
-  document.getElementById("wf-wx-btns").addEventListener("click", e => {
-    const btn = e.target.closest(".wf-eb"); if (!btn) return;
-    wallSelWx = wallSelWx===btn.dataset.wx ? "" : btn.dataset.wx;
-    renderWallForm();
-  });
-
-  document.getElementById("wf-save-btn").onclick = () => {
-    if (!wallSelWith.length) return;
-    wallEntries.unshift({
-      id: Date.now(), date: wallSelDate,
-      with: [...wallSelWith], mood: wallSelMood, wx: wallSelWx,
-      note: document.getElementById("wf-note").value.trim()
-    });
-    wallSave();
-    wallSelWith = []; wallSelMood = ""; wallSelWx = "";
-    document.getElementById("wf-note").value = "";
-    renderWallCal(); renderWallPeople(); renderWallForm(); renderWallDayEntries();
-    wallShowToast("Moment saved ✓");
-  };
-}
-
-let wallListenersInited = false;
-function renderWall() {
-  renderWallCal();
-  renderWallPeople();
-  renderWallForm();
-  renderWallDayEntries();
-  if (!wallListenersInited) { initWallListeners(); wallListenersInited = true; }
-}
-
-function bindWallCTA() {
-  const btn = document.getElementById("btn-go-wall");
-  if (btn) btn.onclick = () => go("s-wall");
-}
-
-/* ---- init ---- */
-renderSplash();
-</script>
-</body>
-</html>
